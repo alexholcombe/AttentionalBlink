@@ -74,6 +74,7 @@ nSamples <- length(sampleNames)
 # Cycle through each sample
 samplesToFit<- ifelse(debugDoJustOneFit,1,nSamples)
 for (thisSample in 1:samplesToFit) {
+#for (thisSample in 1:samplesToFit) {
 
     # Load the compiled data file for this sample.
     data <- readMat(str_c('data/CompiledData_', sampleNames[thisSample], '.mat'))
