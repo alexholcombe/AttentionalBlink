@@ -265,8 +265,8 @@ for (thisSample in 1:samplesToFit) {
             xPosition <- unique(theseT1Pos)
             minX_T1 <- min(xPosition)
             maxX_T1 <- max(xPosition)
-            minErr <- 1-maxX_T1-1
-            maxErr <- nLetters-minX_T1+1
+            minErr <- 1-maxX_T1-1  #extra 1 subtracted because density=0 extremum will be included in pseudo_uniform
+            maxErr <- nLetters-minX_T1+1 #extra 1 subtracted because density=0 extremum will be included in pseudo_uniform
             xDomain <- minErr:maxErr
 
             # Generate the 'pseudo-uniform' distribution, which is the
@@ -289,7 +289,6 @@ for (thisSample in 1:samplesToFit) {
                 # possible error given that T1 position.
                 pseudo_uniform[(1-thisPos-minErr+1):(nLetters-thisPos-minErr+1)] = pseudo_uniform[(1-thisPos-minErr+1):(nLetters-thisPos-minErr+1)]+rep(1,nLetters)
             }
-
             # Cycle through a number of replicates of the fitting
             # procedure with different randomised starting values across
             # the range dictated by the bounds.
