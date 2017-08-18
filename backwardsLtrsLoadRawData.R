@@ -4,13 +4,18 @@ require(R.matlab)
 userNameOnMachineOnWayToGoogleDrive<- "alexh" #"admin" on the machine that Chris Bush used
 GoogleDrivePath<-"/Google\ Drive/Backwards\ paper/"
 
+#random orientation each trial. First experiment of second backwards-letters paper
 
 directoryOfRawData<- paste0("/Users/",userNameOnMachineOnWayToGoogleDrive,GoogleDrivePath,
                             "secondPaper/E1/Data/RawData/Data/")
 #raw data path containing .mat file for each subject
 rawDataPath <- file.path(directoryOfRawData)
 
-#random orientation each trial. First experiment of second backwards-letters paper
+
+data <- readMat( str_c(rawDataPath, "AA_17-05-01_1.mat") )
+#It's imported as a list of lists
+numTrials<- length( unlist( data$allConditions ) )
+#Some of the list members are one-off fields pertaining to entire experiment. Remove them, put in miscInfo
 mydata<-data
 miscInfo <- list()
 membersToDelete<- list()
@@ -20,14 +25,32 @@ for (i in 1:length(mydata)) {
   name<- names(thisListMember)
   len<- length(unlist(thisListMember))
   cat(name, len,'\n')           
-  if (len==1) { #one-off information, not whole experiment
+  if (len < numTrials) { #one-off information, not whole experiment
     miscInfo[name] <- thisListMember
     membersToDelete<-c(membersToDelete,name)
   } 
 }
-
 for (m in membersToDelete) {
   mydata[m]<-NULL #remove from list to leave only every-trial fields
+}
+
+#Remaining fields are matrices, one dimension of which is the trial number. Other dimension is whichTarget in dual-stream case
+#To melt, need to unpack the matrix, going through the second dimension and taking it out, putting at end to create flat dataframe
+# with one row for each trial.
+meltedDf <- data.frame()
+for (target in 1:2) {
+  dfThis <- data.frame()
+  for ( i in 1:length(mydata) ) {  #Go through each field
+    thisMember <- mydata[i]
+    name<- names( thisMember )
+    thisMember<- thisMember[[name]] #for some reason it's always a list of 1 (with the name name)
+    #if only one dimension then it is a condition name applying to both streams
+    thisMember <- drop(thisMember) #remove any singleton dimensions
+    ndim <- length( dim( thisMember ) )
+    if ((ndim==0)) {
+      dfThis$name <- thisMember 
+    }
+  }
 }
 
 col_headings <- c('participantID',
