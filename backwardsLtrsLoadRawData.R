@@ -39,7 +39,8 @@ for (m in membersToDelete) {
 # with one row for each trial.
 meltedDf <- data.frame()
 for (target in 1:2) {
-  dfThis <- data.frame()
+  dfThis <- data.frame(trial=seq(1,numTrials))
+  dfThis$target<- target
   for ( i in 1:length(mydata) ) {  #Go through each field
     thisMember <- mydata[i]
     name<- names( thisMember )
@@ -47,10 +48,14 @@ for (target in 1:2) {
     #if only one dimension then it is a condition name applying to both streams
     thisMember <- drop(thisMember) #remove any singleton dimensions
     ndim <- length( dim( thisMember ) )
-    if ((ndim==0)) {
-      dfThis$name <- thisMember 
+    if ((ndim==0)) {  #it is a condition name applying to both streams
+      dfThis[[name]] <- thisMember
+    }
+    else { #else it has separate values for each target
+      dfThis[[name]] <- thisMember[target]
     }
   }
+  meltedDf<-rbind(meltedDf,dfThis)
 }
 
 col_headings <- c('participantID',
