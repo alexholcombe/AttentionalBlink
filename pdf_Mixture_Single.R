@@ -22,10 +22,10 @@ pdf_Mixture_Single <- function(x,p,mu,sigma){
     # cat("p ", p, " mu ",  mu, " sigma ", sigma, "\n")
     # cat("pseudo_uniform ", pseudo_uniform, "\n")
     # cat("dnorm(xDomain,mu,sigma)", dnorm(xDomain,mu,sigma), "\n")
-    pseudo_normal <- dnorm(xDomain,mu,sigma)*pseudo_uniform
+    pseudo_normal <- dnorm(xDomain,mu,sigma)*pseudoUniform
     # cat("pseudo_normal ", pseudo_normal, "\n")
     
-    normFactor_uniform <- sum(pseudo_uniform)
+    normFactor_uniform <- sum(pseudoUniform)
     # cat("normFactor_uniform ", normFactor_uniform, "\n")  
     normFactor_normal <- sum(pseudo_normal)
     # cat("normFactor_normal ", normFactor_normal, "\n")  
@@ -38,7 +38,7 @@ pdf_Mixture_Single <- function(x,p,mu,sigma){
         normFactor_normal <- 10^-8
     }
 
-    uniResultTemp <- interp1(xDomain, pseudo_uniform, x)
+    uniResultTemp <- interp1(xDomain, pseudoUniform, x)
     uniResultTemp[is.na(uniResultTemp)] <- 0
     # cat("uniResultTemp ", uniResultTemp, "\n")
     normResultTemp <- dnorm(x,mu,sigma)*uniResultTemp

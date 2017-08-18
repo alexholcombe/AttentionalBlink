@@ -65,10 +65,26 @@ for (i in 1:length( target1Pos )) {  #empirical T1 positions (doesn't assume was
 }
 #Have to pad with extra zero
 
-xPosition <- unique(theseT1Pos)
-minX_T1 <- min(xPosition)
-maxX_T1 <- max(xPosition)
-minErr <- 1-maxX_T1 #-1
-maxErr <- nLetters-minX_T1+1
-xDomain <- minErr:maxErr
 
+# Run the MLE function.
+# [currentEstimates, currentCIs] <- mle(theseT1Error, 'pdf', pdf_normmixture_single, 'start', parameterGuess, 'lower', parameterLowerBound, 'upper', parameterUpperBound, 'options', options)
+fitModel <- function(SPEs, parameterGuess)
+{
+  pdf_normmixture_single_par <- function(par)
+  {
+    p <- par[1]
+    mu <- par[2]
+    sigma <- par[3]
+    result <- pdf_normmixture_single(SPEs, p, mu, sigma)
+    # Sometimes pdf_normmixture_single returns 0. And the log of 0 is -Inf. So we add
+    # 1e-8 to make the value we return finite. This allows optim() to successfully
+    # optimise the function.
+    return(-sum(log(result + 1e-8)))
+  }                
+  fit <- optim(parameterGuess, pdf_normmixture_single_par, lower=parameterLowerBound, upper=parameterUpperBound, control=list(trace=0), method="L-BFGS-B")
+  return(fit$par)                    
+}
+
+SPEs<- data$allResponses[,1] - data$allTargets[
+
+fitModel(
