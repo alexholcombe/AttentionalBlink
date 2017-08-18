@@ -92,7 +92,8 @@ E$SPE<- E$respSP - E$targetSP
 #save dataframe as csv file
 saveDir<-"data/"
 
-write.csv(E,paste0(saveDir, "alexImportBackwardsPaper2E1.csv"),row.names=FALSE)
+saveRDS(E, file=paste0(saveDir,"alexImportBackwardsPaper2E1.Rdata"))
+#write.csv(E,paste0(saveDir, "alexImportBackwardsPaper2E1.csv"),row.names=FALSE) #write.csv loses the dimensions
 
 
 #sanity check the histogram
