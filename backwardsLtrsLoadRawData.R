@@ -54,9 +54,27 @@ for (target in 1:2) {
     else { #else it has separate values for each target
       dfThis[[name]] <- thisMember[target]
     }
+    
+    #calculate the serial position of the response from the allLetterOrder
+    thisStreamLetterOrder<- mydata$allLetterOrder[,target,]
+    allResponses<- mydata$allResponses[,target]
+    
+    #first dimension is trial. second dimension is serial position
+    for (trial in 1:numTrials) {
+      #for each trial in allResponses, do the match
+      respSP<- match(allResponses[trial], thisStreamLetterOrder[trial,])
+    }
+    #mapply(match, 1, list(c(3,2,1))) #this works. So, need to turn thisStreamLetterOrder into many lists
+    eachTrialLetterOrderList<- split(thisStreamLetterOrder, row(thisStreamLetterOrder))
+    mapply(match, allResponses, eachTrialLetterOrderList )
   }
   meltedDf<-rbind(meltedDf,dfThis)
 }
+#Crap I need to calculate the serial position of the response from the allLetterOrder
+#take the first target
+target1letterOrder <- mydata$allLetterOrder
+tempData$response1[rowCount] <- match(tempData$responseLetter1[rowCount],singleSubjectData$allLetterOrder[rowCount,1,])
+#Calculate the serial position error
 
 col_headings <- c('participantID',
                   'block',
@@ -79,8 +97,8 @@ col_headings <- c('participantID',
                   'endTime')
 
 #Meaning of condition and expDegrees variables
-#1
-#2
+#1 - upright
+#2 - inverted
              
 E1 <- data.frame(matrix(ncol = 19, nrow = 0)) # Dataframe to hold all data
 colnames(E2) <- col_headings #Assign column headings
