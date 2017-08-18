@@ -20,7 +20,7 @@ library(signal) # Provides interp1 function
 
 pdf_Mixture_Single <- function(x,p,mu,sigma){
     # cat("p ", p, " mu ",  mu, " sigma ", sigma, "\n")
-    # cat("pseudo_uniform ", pseudo_uniform, "\n")
+    # cat("pseudoUniform ", pseudoUniform, "\n")
     # cat("dnorm(xDomain,mu,sigma)", dnorm(xDomain,mu,sigma), "\n")
     pseudo_normal <- dnorm(xDomain,mu,sigma)*pseudoUniform
     # cat("pseudo_normal ", pseudo_normal, "\n")

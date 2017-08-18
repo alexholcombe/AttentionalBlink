@@ -67,8 +67,8 @@ for (i in 1:length( data$targetSP )) {
   maxThis <- numItemsInStream-thisPos-minSPE+1
   pseudoUniform[minThis:maxThis,2] = pseudoUniform[minThis:maxThis,2] + 1
 }
-#Have to pad with extra zero for some reason to make fit work
-pseudo_uniform<- c(0, pseudoUniform[,2], 0)
+#Have to pad with extra zero for some reason to make fit work. And only want second column, not labels
+pseudoUniform<- c(0, pseudoUniform[,2], 0)
 
 # Run the MLE function.
 # [currentEstimates, currentCIs] <- mle(theseT1Error, 'pdf', pdf_normmixture_single, 'start', parameterGuess, 'lower', parameterLowerBound, 'upper', parameterUpperBound, 'options', options)
