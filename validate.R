@@ -8,7 +8,6 @@ importedToRbyChris <- "allParams.RData"
 rawDataPath<- "~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/RawData/Data/"
 
 source("pdf_Mixture_Single.R") 
-pdf_normmixture_single <- pdf_Mixture_Single
 
 #Load one subject
 #data <- readMat(str_c(rawDataPath, "AA_17-05-01_1.mat"))  #The raw multidimensional matrix format
@@ -38,6 +37,7 @@ xDomain<- minSPE:maxSPE
 
 #Would be nice to add my helper function to take note of whether counterbalanced
   
+createGuessingDistribution<- function(minSPE,maxSPE,targetSP,numItemsInStream) {
 # Generate the 'pseudo-uniform' distribution, which is the expected distribution of errors if a random guess was
 # provided on every trial. This isn't an actual uniform distribution because the most extreme errors are only
 # possible on trials in which targets appear at their most extreme positions.
@@ -67,9 +67,14 @@ for (i in 1:length( data$targetSP )) {
   maxThis <- numItemsInStream-thisPos-minSPE+1
   pseudoUniform[minThis:maxThis,2] = pseudoUniform[minThis:maxThis,2] + 1
 }
-#Have to pad with extra zero for some reason to make fit work. And only want second column, not labels
-pseudoUniform<- c(0, pseudoUniform[,2], 0)
+#Only want second column, not labels
+pseudoUniform<- pseudoUniform[,2]
 
+#Have to pad with extra zero for some reason to make fit work. And only want second column, not labels
+pad<-FALSE
+if (pad) {
+  pseudoUniform<- c(0, pseudoUniform, 0)
+}
 # Run the MLE function.
 # [currentEstimates, currentCIs] <- mle(theseT1Error, 'pdf', pdf_normmixture_single, 'start', parameterGuess, 'lower', parameterLowerBound, 'upper', parameterUpperBound, 'options', options)
 fitModel <- function(SPEs, parameterGuess)
@@ -79,7 +84,7 @@ fitModel <- function(SPEs, parameterGuess)
     p <- par[1]
     mu <- par[2]
     sigma <- par[3]
-    result <- pdf_normmixture_single(SPEs, p, mu, sigma)
+    result <- pdf_Mixture_Single(SPEs, p, mu, sigma)
     # Sometimes pdf_normmixture_single returns 0. And the log of 0 is -Inf. So we add
     # 1e-8 to make the value we return finite. This allows optim() to successfully
     # optimise the function.
@@ -113,5 +118,6 @@ parameterGuess <- c(pGuess, muGuess, sigmaGuess)
 cat("parameterGuess", parameterGuess, "\n")
 params <- fitModel(data$SPE, parameterGuess)
 cat("this estimate params=", params, "\n")
-
+length(pseudoUniform)#pseudoUniform is 37 long, padded or 35 unpadded
+#length(dnorm(xDomain,muGuess,sigmaGuess)) #35 long, which makes sense. -17->17
 
