@@ -18,14 +18,15 @@ library(signal) # Provides interp1 function
 #   return(vq)
 # }
 
-pdf_Mixture_Single <- function(x,p,mu,sigma){
+pdf_Mixture_Single <- function(x,p,mu,sigma,guessingDistribution){
     # cat("p ", p, " mu ",  mu, " sigma ", sigma, "\n")
     #cat("pseudoUniform ", pseudoUniform, "\n")
     #cat("dnorm(xDomain,mu,sigma)", dnorm(xDomain,mu,sigma), "\n")
-    pseudo_normal <- dnorm(xDomain,mu,sigma)*pseudoUniform
+    pseudo_normal <- dnorm(xDomain,mu,sigma)*guessingDistribution
     #cat("pseudo_normal ", pseudo_normal, "\n")
     
-    normFactor_uniform <- sum(pseudoUniform)
+    #normalising factors
+    normFactor_uniform <- sum(guessingDistribution)
     # cat("normFactor_uniform ", normFactor_uniform, "\n")  
     normFactor_normal <- sum(pseudo_normal)
     # cat("normFactor_normal ", normFactor_normal, "\n")  
@@ -38,7 +39,7 @@ pdf_Mixture_Single <- function(x,p,mu,sigma){
         normFactor_normal <- 10^-8
     }
 
-    uniResultTemp <- interp1(xDomain, pseudoUniform, x)
+    uniResultTemp <- interp1(xDomain, guessingDistribution, x)
     uniResultTemp[is.na(uniResultTemp)] <- 0
     # cat("uniResultTemp ", uniResultTemp, "\n")
     normResultTemp <- dnorm(x,mu,sigma)*uniResultTemp
