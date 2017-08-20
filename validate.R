@@ -28,22 +28,11 @@ if (directFromMAT) {  #Have full code for importing lots of MAT Files in backwar
   #Load one subject to get
   data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
 }
-  
-source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
-
-# Calculate the domain of possible serial position errors.
-minTargetSP <- min(possibleTargetSP)
-maxTargetSP <- max(possibleTargetSP)
-minSPE <- 1 - maxTargetSP
-maxSPE <- numItemsInStream - minTargetSP
-
 #Would be nice to add my helper function to take note of whether counterbalanced
+
+source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
 source( file.path(mixModelingPath,"createGuessingDistribution.R")  )
 source( file.path(mixModelingPath,"fitModel.R") )
-
-possibleTargetSP<- sort(unique(data$targetSP))
-numItemsInStream<- length( data$letterSeq[1,] )  
-pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,data$targetSP,numItemsInStream)
 
 # Set PARAMETER BOUNDS. Pat apparently found these were needed to 
 # prevent over-fitting to blips in the distributions. These
@@ -53,17 +42,18 @@ muBound <- 4   #will only consider -4 to +4 for mu
 sigmaBound <- 4 #will only consider 0 to 4 for sigma
 
 smallNonZeroNumber <- 10^-5# Useful number for when limits can't be exactly zero but can be anything larger
-                          #efficacy,          latency,    precision
+#efficacy,          latency,    precision
 parametersLowerBound <- c(smallNonZeroNumber, -muBound, smallNonZeroNumber)
 parametersUpperBound <- c(1,                   muBound, sigmaBound)
 # END PARAMETER BOUNDS
 
+numItemsInStream<- length( data$letterSeq[1,] )  
+#It seems to work with dplyr, can't have array field like letterSeq
+df<- data
+df$letterSeq<- NULL
+df<- filter(df, subject=="AA")
 
-# Set some model-fitting parameters.
-nReplicates <- 100# Number of times to repeat each fit with different starting values
-fitMaxIter <- 10^4# Maximum number of fit iterations
-fitMaxFunEvals <- 10^4# Maximum number of model evaluations
-
+library(dplyr)
 # Randomise starting values for each parameter.
 parametersGuess<- function( parametersLowerBound, parametersUpperBound ) {
   guess<- rep(0,3)
@@ -73,23 +63,42 @@ parametersGuess<- function( parametersLowerBound, parametersUpperBound ) {
   } 
   return (guess)
 }
+
+analyzeOneCondition<- function(df, numItemsInStream) {
+  # Calculate the domain of possible serial position errors.
+  possibleTargetSP<- sort(unique(df$targetSP))
+  minTargetSP <- min(possibleTargetSP)
+  maxTargetSP <- max(possibleTargetSP)
+  minSPE <- 1 - maxTargetSP
+  maxSPE <- numItemsInStream - minTargetSP
   
-library(dplyr)
-
-#Break data by condition to  send to fitModel
-condtnVariableNames <- c("target", "condition") # c("expDegrees")
-
-#Use RT to check what is left and what is right
-fitModelDF <- function( SPE, minSPE, maxSPE ) {
-  #Calculate parameter guess
-  #I THINK YOU'RE ALLOWED TO SEND ADDITIONAL PARAMS WITH DDPLY
-  startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
-  params<- fitModel(SPE, minSPE, maxSPE, startingParams)
-  timesFitCalled <<- timesFitCalled+1
-  return( data.frame(efficay=params[1], latency=params[2], precision=params[3]) )
+  #calculate the guessing distribution, empirically (based on actual targetSP)
+  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
+  
+  # Set some model-fitting parameters.
+  nReplicates <- 100# Number of times to repeat each fit with different starting values
+  fitMaxIter <- 10^4# Maximum number of fit iterations
+  fitMaxFunEvals <- 10^4# Maximum number of model evaluations
+  
+  #Break data by condition to  send to fitModel
+  condtnVariableNames <- c("target", "condition") # c("expDegrees")
+  
+  #Use RT to check which is left target and which is right target
+  fitModelDF <- function( SPE, minSPE, maxSPE ) {
+    #Calculate parameter guess
+    #I THINK YOU'RE ALLOWED TO SEND ADDITIONAL PARAMS WITH DDPLY
+    startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
+    params<- fitModel(SPE, minSPE, maxSPE, startingParams)
+    return( data.frame(efficay=params[1], latency=params[2], precision=params[3]) )
+  }
+  
+  for (n in 1:nReplicates) {
+    fitModelDF( df$SPE, minSPE, maxSPE )
+  }
 }
 
-fitModelDF( data$SPE, minSPE, maxSPE )
+analyzeOneCondition(df, numItemsInStream)
+
 
 data %>% 
   group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
