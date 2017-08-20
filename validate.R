@@ -33,8 +33,6 @@ if (directFromMAT) {
   
 source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
 
-condtnVariableNames <- c("expDegrees")
-
 if (directFromMAT) {
 
 }
@@ -70,18 +68,43 @@ fitMaxIter <- 10^4# Maximum number of fit iterations
 fitMaxFunEvals <- 10^4# Maximum number of model evaluations
 
 # Randomise starting values for each parameter.
-parameterGuess<- rep(0,3)
-for (i in 1:length(parameterGuess)) {
-  #random value between min and max possible value
-  parameterGuess[i] <- runif(n=1, min=parametersLowerBound[i], max=parametersUpperBound[i] ) 
+parametersGuess<- function( parametersLowerBound, parametersUpperBound ) {
+  guess<- rep(0,3)
+  for (i in 1:length(guess)) {
+    #random value between min and max possible value
+    guess[i] <- runif(n=1, min=parametersLowerBound[i], max=parametersUpperBound[i] ) 
+  } 
+  return (guess)
+}
+  
+library(dplyr)
+
+#Break data by condition to  send to fitModel
+condtnVariableNames <- c("target", "condition") # c("expDegrees")
+
+#Use RT to check what is left and what is right
+fitModelDF <- function( SPE, minSPE, maxSPE ) {
+  #Calculate parameter guess
+  #I THINK YOU'RE ALLOWED TO SEND ADDITIONAL PARAMS WITH DDPLY
+  startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
+  params<- fitModel(SPE, minSPE, maxSPE, startingParams)
+  timesFitCalled <<- timesFitCalled+1
+  return( data.frame(efficay=params[1], latency=params[2], precision=params[3]) )
 }
 
-#Break data into conditions and send to fitModel
+fitModelDF( data$SPE, minSPE, maxSPE )
 
-params <- fitModel(data$SPE, minSPE, maxSPE, parameterGuess)
-cat("this estimate params=", params, "\n")
+data %>% 
+  group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
+  do(fitModelDF(.$SPE,minSPE,maxSPE))
 
-#put into dataframe
+
+
+
+startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
+params <- fitModel(data$SPE, minSPE, maxSPE, startingParams)
+cat("startingParams=",startingParams,"this estimate params=", params, "\n")
+
 
 
 #Load in Chris-created MATLAB parameter estimates
