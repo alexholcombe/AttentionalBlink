@@ -1,4 +1,4 @@
-rm(list=ls())
+rm(list=ls()) #clear all variables
 #random orientation each trial. First experiment of second backwards-letters paper
 
 mixModelingPath<- file.path("mixtureModeling")
@@ -11,7 +11,7 @@ MATLABmixtureModelOutput<- file.path( MATLABmixtureModelOutputPath, importedToRb
 
 #raw data path containing .mat file for each subject
 directFromMAT <- FALSE #.mat file is in particular format
-if (directFromMAT) {
+if (directFromMAT) {  #Have full code for importing lots of MAT Files in backwardsLtrsLoadRawData.R
   rawDataPath<- file.path("~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/RawData/Data/")
   data <- readMat(str_c(rawDataPath, "AA_17-05-01_1.mat"))  #The raw multidimensional matrix format
   
@@ -25,17 +25,12 @@ if (directFromMAT) {
   nTargetPos <- length(targetSP)
 } else {
   rawDataPath<- file.path("data/")
-  #Load one subject
+  #Load one subject to get
   data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
-  possibleTargetSP<- sort(unique(data$targetSP))
-  numItemsInStream<- length( data$letterSeq[1,] )  
 }
   
 source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
 
-if (directFromMAT) {
-
-}
 # Calculate the domain of possible serial position errors.
 minTargetSP <- min(possibleTargetSP)
 maxTargetSP <- max(possibleTargetSP)
@@ -46,6 +41,8 @@ maxSPE <- numItemsInStream - minTargetSP
 source( file.path(mixModelingPath,"createGuessingDistribution.R")  )
 source( file.path(mixModelingPath,"fitModel.R") )
 
+possibleTargetSP<- sort(unique(data$targetSP))
+numItemsInStream<- length( data$letterSeq[1,] )  
 pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,data$targetSP,numItemsInStream)
 
 # Set PARAMETER BOUNDS. Pat apparently found these were needed to 
