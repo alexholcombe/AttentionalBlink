@@ -3,8 +3,11 @@ rm(list=ls())
 
 mixModelingPath<- file.path("mixtureModeling")
 
-mixtureModelOutputPath<-"~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/MixModData"
+
+MATLABmixtureModelOutputPath<-"~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/MixModData"
 importedToRbyChris <- "allParams.RData"
+MATLABmixtureModelOutput<- file.path( MATLABmixtureModelOutputPath, importedToRbyChris )
+  
 
 #raw data path containing .mat file for each subject
 directFromMAT <- FALSE #.mat file is in particular format
@@ -43,6 +46,7 @@ maxSPE <- numItemsInStream - minTargetSP
 
 #Would be nice to add my helper function to take note of whether counterbalanced
 source( file.path(mixModelingPath,"createGuessingDistribution.R")  )
+source( file.path(mixModelingPath,"fitModel.R") )
 
 pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,data$targetSP,numItemsInStream)
 
@@ -65,14 +69,23 @@ nReplicates <- 100# Number of times to repeat each fit with different starting v
 fitMaxIter <- 10^4# Maximum number of fit iterations
 fitMaxFunEvals <- 10^4# Maximum number of model evaluations
 
-
 # Randomise starting values for each parameter.
 parameterGuess<- rep(0,3)
 for (i in 1:length(parameterGuess)) {
+  #random value between min and max possible value
   parameterGuess[i] <- runif(n=1, min=parametersLowerBound[i], max=parametersUpperBound[i] ) 
 }
-source( file.path(mixModelingPath,"fitModel.R") )
+
+#Break data into conditions and send to fitModel
+
 params <- fitModel(data$SPE, minSPE, maxSPE, parameterGuess)
 cat("this estimate params=", params, "\n")
 
-#fitOnce <- function(
+#put into dataframe
+
+
+#Load in Chris-created MATLAB parameter estimates
+load(MATLABmixtureModelOutput, verbose=FALSE)
+#join into single long dataframe
+results_MATLAB<- merge(efficacy.long,latency.long)
+results_MATLAB<- merge(results_MATLAB,precision.long)
