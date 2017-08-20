@@ -1,4 +1,4 @@
-#rm(list=ls())
+rm(list=ls())
 #random orientation each trial. First experiment of second backwards-letters paper
 
 mixModelingPath<- file.path("mixtureModeling")
@@ -23,13 +23,12 @@ if (directFromMAT) {
 } else {
   rawDataPath<- file.path("data/")
   #Load one subject
-  data<- readRDS( file.path(rawDataPath, "data/alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
+  data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
   possibleTargetSP<- sort(unique(data$targetSP))
   numItemsInStream<- length( data$letterSeq[1,] )  
 }
   
 source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
-
 
 condtnVariableNames <- c("expDegrees")
 
@@ -67,33 +66,13 @@ fitMaxIter <- 10^4# Maximum number of fit iterations
 fitMaxFunEvals <- 10^4# Maximum number of model evaluations
 
 
-
-runif(min=
-
-pGuess<- runif( min=parametersLowerBound
-
-pGuess <- runif(1)
-pGuess<- max( c(smallNonZeroNumber, pGuess ) )
-
-muGuess<- runif(min=-1,max=1) * muBound #random number between -muBound and muBound
-
-sigmaGuess<- runif(1)*sigmaBound
-sigmaGuess<- 
-  
-sigmaGuess <- sigmaBound*runif(1)+smallNonZeroNumber
-# Compile to feed into the MLE function.
-parameterGuess <- c(pGuess, muGuess, sigmaGuess)
-cat("parameterGuess", parameterGuess, "\n")
-#
-
 # Randomise starting values for each parameter.
 parameterGuess<- rep(0,3)
 for (i in 1:length(parameterGuess)) {
   parameterGuess[i] <- runif(n=1, min=parametersLowerBound[i], max=parametersUpperBound[i] ) 
 }
 source( file.path(mixModelingPath,"fitModel.R") )
-parameterGuess
-params <- fitModel(data$SPE, parameterGuess)
+params <- fitModel(data$SPE, minSPE, maxSPE, parameterGuess)
 cat("this estimate params=", params, "\n")
 
 #fitOnce <- function(

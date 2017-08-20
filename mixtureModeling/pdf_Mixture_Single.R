@@ -18,10 +18,10 @@ library(signal) # Provides interp1 function
 #   return(vq)
 # }
 
-pdf_Mixture_Single <- function(x,p,mu,sigma,guessingDistribution){
+pdf_Mixture_Single <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution){
     # cat("p ", p, " mu ",  mu, " sigma ", sigma, "\n")
     #cat("pseudoUniform ", pseudoUniform, "\n")
-    #cat("dnorm(xDomain,mu,sigma)", dnorm(xDomain,mu,sigma), "\n")
+    xDomain <- minSPE:maxSPE
     pseudo_normal <- dnorm(xDomain,mu,sigma)*guessingDistribution
     #cat("pseudo_normal ", pseudo_normal, "\n")
     
