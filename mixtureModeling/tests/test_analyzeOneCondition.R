@@ -33,46 +33,8 @@ test_that("Problematic cases", {
   df<-BA22
   #sanity check
   minSPE<- -17; maxSPE<- 17
-  g=ggplot(df, aes(x=SPE))  
-  #g<-g+facet_grid(condName~exp)
-  g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
-  g
-  
-  source( file.path(pathNeeded,"histogramPlotting.R") )
-  #plot dnorm and guessing distribution
-  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
-  #unitise it
-  pseudoUniform<-pseudoUniform/sum(pseudoUniform)
-  pseudoUniform
-  #calculate points at appropriate height for this data
-  guessingThis<- (1-estimates$p1) * pseudoUniform * length(df$SPE)
-  guessingThis<-data.frame(x=minSPE:maxSPE, SPE=guessingThis)
-  g<-g+ geom_line(data=dg,aes(x=x,y=SPE),color="yellow",size=1.2)
-  g
-  #calculate fitted Gaussian distribution
-  grain<-0.1
-  domain<-seq(minSPE,maxSPE,grain)
-  gaussianThis<- gaussianScaledForData(estimates$p1,estimates$p2,estimates$p3,df$SPE,minSPE,maxSPE,grain) 
-  
-  #gaussianThis<- dnorm(domain,estimates$p2,estimates$p3)
-  #Calculate points at appropriate height fot this data
-  #gaussianThis<- gaussianThis * estimates$p1 * length(df$SPE)
-  #gaussianThis<-data.frame(x=domain, SPE=gaussianThis)
-  g<-g+ geom_line(data=gaussianThis,aes(x=x,y=SPE),color="blue",size=1.2)
-  g
-  #Calculate sum
-  #Need the quantized Gaussian
-  grain<-1
-  gaussianThis<- gaussianScaledForData(estimates$p1,estimates$p2,estimates$p3,df$SPE,minSPE,maxSPE,grain) 
-  combined<-guessingThis
-  combined$SPE <- combined$SPE + gaussianThis$SPE
-  g<-g+ geom_point(data=combined,aes(x=x,y=SPE),color="green",size=1.7)
-  g  
+
 
 )
 
 
-#BO,1,1
-estimates %>% filter(round(p1,3)==0.280) #BA,2,2 or BE,2,1
-#1e-05  4 1e-05 334.385593546 but didn't end up being the winning replicate
-#Inspect AD,2,1 and AI,1,2 because very poor fit

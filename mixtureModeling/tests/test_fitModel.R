@@ -1,7 +1,7 @@
 # test of fitModel intended to be used with the testthat package
 
-#To test, run test_file("mixtureModeling/test_fitModel.r")
-#But that doesn't work because then the path gets set to mixtureModeling/tests/
+#To testthat, run test_file("mixtureModeling/tests/test_fitModel.r")
+#Compensate for path getting set to mixtureModeling/tests/
 print(getwd())
 if (basename(getwd()) != "tests") {
   pathNeeded<- "mixtureModeling"
