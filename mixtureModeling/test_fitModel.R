@@ -11,7 +11,17 @@ test_that("Decent estimates", {
   df<- filter(df, condition==1 & target==1)
   
   startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
-  fit<- fitModel(df$SPE, minSPE, maxSPE, startingParams)
+
+  possibleTargetSP<- sort(unique(df$targetSP))
+  minTargetSP <- min(possibleTargetSP)
+  maxTargetSP <- max(possibleTargetSP)
+  minSPE <- 1 - maxTargetSP
+  maxSPE <- numItemsInStream - minTargetSP
+  numItemsInStream<-24
+  #calculate the guessing distribution, empirically (based on actual targetSP)
+  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
+  
+  fit<- fitModel(df$SPE, minSPE, maxSPE, pseudoUniform, startingParams)
 
   #Check that standard fit method gives decent results
   expectedParamEstimates<- c(.84,.48,.99) # c(.37,1.2,.017)  #from L-BFGS-B

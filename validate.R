@@ -30,7 +30,6 @@ if (directFromMAT) {  #Have full code for importing lots of MAT Files in backwar
 }
 #Would be nice to add my helper function to take note of whether counterbalanced
 
-source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
 source( file.path(mixModelingPath,"createGuessingDistribution.R")  )
 source( file.path(mixModelingPath,"fitModel.R") )
 
@@ -76,7 +75,7 @@ analyzeOneCondition<- function(df, numItemsInStream) {
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   
   # Set some model-fitting parameters.
-  nReplicates <- 100# Number of times to repeat each fit with different starting values
+  nReplicates <- 2# 100# Number of times to repeat each fit with different starting values
   fitMaxIter <- 10^4# Maximum number of fit iterations
   fitMaxFunEvals <- 10^4# Maximum number of model evaluations
   
@@ -88,21 +87,34 @@ analyzeOneCondition<- function(df, numItemsInStream) {
     #Calculate parameter guess
     #I THINK YOU'RE ALLOWED TO SEND ADDITIONAL PARAMS WITH DDPLY
     startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
-    fit<- fitModel(SPE, minSPE, maxSPE, startingParams)
+    fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams)
     params<- fit$params
-    return( data.frame(efficay=params[1], latency=params[2], precision=params[3]) )
+    return( data.frame(efficay=params[1], latency=params[2], precision=params[3], val=fit$value) )
   }
-  
+  lowestVal<-999999999
+  bestFitN<- 1
   for (n in 1:nReplicates) {
-    fitModelDF( df$SPE, minSPE, maxSPE )
+    ans<- fitModelDF( df$SPE, minSPE, maxSPE )
+    if (ans$val < lowestVal) {
+      bestFitN <- n
+    }
   }
 }
 
-
-
 analyzeOneCondition(df, numItemsInStream)
 
+# Compute the negative log likelihood of the fitted model.
+thisNegLogLikelihood <- -sum(log(pdf_normmixture_single(theseT1Error,currentEstimates[1],currentEstimates[2],currentEstimates[3])))
 
+# Check whether this is lower than the lowest so far.
+if (minNegLogLikelihood > thisNegLogLikelihood){
+  
+  # If so, store this as the current best estimate.
+  minNegLogLikelihood <- thisNegLogLikelihood
+  bestEstimates <- currentEstimates
+  # bestEstimateCIs <- currentCIs
+  
+}
 
 data %>% 
   group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
