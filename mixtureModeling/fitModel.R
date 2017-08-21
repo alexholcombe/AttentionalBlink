@@ -1,5 +1,11 @@
-#source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
-source( "pdf_Mixture_Single.R" ) 
+
+#But that doesn't work because then the path gets set to mixtureModeling/
+if (basename(getwd()) != "mixtureModeling") {
+  pathNeeded<- "mixtureModeling"
+} else { 
+  pathNeeded <- "." 
+}
+source( file.path(pathNeeded,"pdf_Mixture_Single.R") ) 
 
 fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
 {

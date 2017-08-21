@@ -1,8 +1,14 @@
 # test of fitModel intended to be used with the testthat package
-#To test, run test_file("mixtureModeling/test_fitModel.r")
 
-#source("mixtureModeling/fitModel.R")
-source("fitModel.R")
+#To test, run test_file("mixtureModeling/test_fitModel.r")
+#But that doesn't work because then the path gets set to mixtureModeling/
+print(getwd())
+if (basename(getwd()) != "mixtureModeling") {
+  pathNeeded<- "mixtureModeling"
+} else { 
+  pathNeeded <- "." 
+}
+source(file.path(pathNeeded,"fitModel.R"))
 
 test_that("Decent estimates", {
   
