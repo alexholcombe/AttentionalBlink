@@ -1,9 +1,10 @@
 
-#But that doesn't work because then the path gets set to mixtureModeling/
-if (basename(getwd()) != "mixtureModeling") {
+
+#Test might not work because path gets set to mixtureModeling/tests/
+if (basename(getwd()) != "tests") {
   pathNeeded<- "mixtureModeling"
 } else { 
-  pathNeeded <- "." 
+  pathNeeded <- ".." 
 }
 source( file.path(pathNeeded,"pdf_Mixture_Single.R") ) 
 

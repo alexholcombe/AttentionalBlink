@@ -17,6 +17,20 @@ estimates<- analyzeOneCondition(df, 24)
 estimates
 
 #Test with a problematic dataset
+test_that("Problematic cases", {
+  
+  data<- readRDS( file.path(pathNeeded, "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
+  #data<- readRDS( file.path("mixtureModeling/tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
+  library(dplyr)
+  numItemsInStream<- length( data$letterSeq[1,] )  
+  df<- data
+  #It seems that to work with dplyr, can't have array field like letterSeq
+  df$letterSeq<- NULL
+  BA22 <- df %>% filter(subject=="BA" & target==2 & condition==2)
+  analyzeOneCondition(BA22,numItemsInStream)
+  #plot histogram
+  #plot dnorm and guessing distribution
+)
 
 
 #BO,1,1

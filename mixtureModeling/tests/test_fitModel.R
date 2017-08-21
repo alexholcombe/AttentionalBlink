@@ -1,12 +1,12 @@
 # test of fitModel intended to be used with the testthat package
 
 #To test, run test_file("mixtureModeling/test_fitModel.r")
-#But that doesn't work because then the path gets set to mixtureModeling/
+#But that doesn't work because then the path gets set to mixtureModeling/tests/
 print(getwd())
-if (basename(getwd()) != "mixtureModeling") {
+if (basename(getwd()) != "tests") {
   pathNeeded<- "mixtureModeling"
 } else { 
-  pathNeeded <- "." 
+  pathNeeded <- ".." 
 }
 source(file.path(pathNeeded,"fitModel.R"))
 
