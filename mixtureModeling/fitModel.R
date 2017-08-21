@@ -1,8 +1,10 @@
-source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
+#source( file.path(mixModelingPath,"pdf_Mixture_Single.R") ) 
+source( "pdf_Mixture_Single.R" ) 
 
 fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
 {
-  #create function that calculates log likelihood of data given particular parameter values
+  #Create function that calculates log likelihood of data given particular parameter values,
+  #to pass to optim
   pdf_normmixture_single_par <- function(par)
   {
     p <- par[1]

@@ -19,8 +19,7 @@ library(signal) # Provides interp1 function
 # }
 
 pdf_Mixture_Single <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution){
-    # cat("p ", p, " mu ",  mu, " sigma ", sigma, "\n")
-    #cat("pseudoUniform ", pseudoUniform, "\n")
+    
     xDomain <- minSPE:maxSPE
     pseudo_normal <- dnorm(xDomain,mu,sigma)*guessingDistribution
     #cat("pseudo_normal ", pseudo_normal, "\n")
@@ -37,35 +36,33 @@ pdf_Mixture_Single <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution){
         normFactor_normal <- 10^-8
     }
 
-    #For each SPE, determine the height of the guessingDistribution
+    #For all SPEs, determine the height of the guessingDistribution
     #Use interpolate in case there is a rounding problem? Alex doesn't understand why interp used
     uniResultTemp <- interp1(xDomain, guessingDistribution, x)
     uniResultTemp[is.na(uniResultTemp)] <- 0
 
     #Multiply Gaussian density by guessing density
-    normResultTemp <- dnorm(x,mu,sigma)*uniResultTemp
+    normResultTemp <- dnorm(x,mu,sigma) * uniResultTemp
 
     #normalize
     uniResultTemp <- uniResultTemp/normFactor_uniform
-
     normResultTemp <- normResultTemp/normFactor_normal
-    # cat("normResultTemp ", normResultTemp, "\n")
-    
+
     propNorm <- p
     propUniform <- 1-p
 
-    normResult <- propNorm*normResultTemp
-    uniResult <- propUniform*uniResultTemp
+    normResult <- propNorm * normResultTemp
+    uniResult <-  propUniform * uniResultTemp
 
     if (sum(length(normResult)==length(uniResult))==2){
-        tempResult <- normResult+uniResult
+        result <- normResult+uniResult
     } else {
-        tempResult <- normResult+t(uniResult)
+        result <- normResult+t(uniResult)
     }
 
     #xIndex = x-min(xDomain)+1;
     #results = tempResult(xIndex);
     # cat("tempResult ", tempResult, "\n")
     #tempResult <- tempResult[1]
-    return(tempResult)
+    return(result)
 }

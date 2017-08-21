@@ -88,33 +88,31 @@ analyzeOneCondition<- function(df, numItemsInStream) {
     #I THINK YOU'RE ALLOWED TO SEND ADDITIONAL PARAMS WITH DDPLY
     startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
     fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams)
-    params<- fit$params
-    return( data.frame(efficay=params[1], latency=params[2], precision=params[3], val=fit$value) )
+    return( data.frame(efficay=fit[1], latency=fit[2], precision=fit[3], val=fit$value) )
   }
-  lowestVal<-999999999
-  bestFitN<- 1
-  for (n in 1:nReplicates) {
-    ans<- fitModelDF( df$SPE, minSPE, maxSPE )
-    if (ans$val < lowestVal) {
-      bestFitN <- n
+  
+  for (n in 1:nReplicates) { #fit the model many times (with different starting parameters)
+    
+    paramsPlusNegLogLikelihood<- fitModelDF( df$SPE, minSPE, maxSPE )
+    print(paramsPlusNegLogLikelihood)
+    #Save the best estimate
+    if (n==1) {
+      bestEstimate <- paramsPlusNegLogLikelihood
+    } else {
+      if (paramsPlusNegLogLikelihood$val < bestEstimate$val) 
+        { bestEstimate <- paramsPlusNegLogLikelihood }
     }
-  }
+  }  #End fitting the model many times with different starting params
+  
+  return( bestEstimate )
 }
 
-analyzeOneCondition(df, numItemsInStream)
+bestEstimates<- analyzeOneCondition(df, numItemsInStream)
 
 # Compute the negative log likelihood of the fitted model.
 thisNegLogLikelihood <- -sum(log(pdf_normmixture_single(theseT1Error,currentEstimates[1],currentEstimates[2],currentEstimates[3])))
 
-# Check whether this is lower than the lowest so far.
-if (minNegLogLikelihood > thisNegLogLikelihood){
-  
-  # If so, store this as the current best estimate.
-  minNegLogLikelihood <- thisNegLogLikelihood
-  bestEstimates <- currentEstimates
-  # bestEstimateCIs <- currentCIs
-  
-}
+
 
 data %>% 
   group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
