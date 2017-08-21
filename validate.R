@@ -48,10 +48,10 @@ parametersUpperBound <- c(1,                   muBound, sigmaBound)
 # END PARAMETER BOUNDS
 
 numItemsInStream<- length( data$letterSeq[1,] )  
-#It seems to work with dplyr, can't have array field like letterSeq
 df<- data
+#It seems that to work with dplyr, can't have array field like letterSeq
 df$letterSeq<- NULL
-df<- filter(df, subject=="AA")
+
 
 library(dplyr)
 # Randomise starting values for each parameter.
@@ -88,7 +88,8 @@ analyzeOneCondition<- function(df, numItemsInStream) {
     #Calculate parameter guess
     #I THINK YOU'RE ALLOWED TO SEND ADDITIONAL PARAMS WITH DDPLY
     startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
-    params<- fitModel(SPE, minSPE, maxSPE, startingParams)
+    fit<- fitModel(SPE, minSPE, maxSPE, startingParams)
+    params<- fit$params
     return( data.frame(efficay=params[1], latency=params[2], precision=params[3]) )
   }
   
@@ -97,7 +98,10 @@ analyzeOneCondition<- function(df, numItemsInStream) {
   }
 }
 
+
+
 analyzeOneCondition(df, numItemsInStream)
+
 
 
 data %>% 

@@ -13,11 +13,25 @@ fitModel <- function(SPEs, minSPE, maxSPE, parameterGuess)
     # optimise the function.
     return(-sum(log(result + 1e-8)))
   }                
+  
   #Traverse parameter space to find parameter values that maximise the log likelihood
-  fit <- optim(parameterGuess, pdf_normmixture_single_par, lower=parametersLowerBound, upper=parametersUpperBound,
-               control=list(trace=0), method="L-BFGS-B")
-  return(fit$par)                    
+  testingOptimization<-FALSE
+  ctrl<- list( trace=0, starttests=FALSE )
+  if (testingOptimization) {
+    ctrl<- list( trace=0, all.methods=TRUE, save.failures=TRUE ) 
+  }
+
+  fit <- optimx(parameterGuess, fn= pdf_normmixture_single_par, method=c('L-BFGS-B'),
+                lower=parametersLowerBound, upper=parametersUpperBound,
+                control=ctrl)
+
+  return(fit)                    
 }
+
 
 # Alternatively, could use the MLE function.
 # [currentEstimates, currentCIs] <- mle(theseT1Error, 'pdf', pdf_normmixture_single, 'start', parameterGuess, 'lower', parameterLowerBound, 'upper', parameterUpperBound, 'options', options)
+
+#Before I switched to optimx, I used:
+#fit <- optim(parameterGuess, pdf_normmixture_single_par, lower=parametersLowerBound, upper=parametersUpperBound,
+#             control=list(trace=0), method="L-BFGS-B")
