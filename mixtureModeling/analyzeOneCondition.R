@@ -26,6 +26,7 @@ parametersGuess<- function( parametersLowerBound, parametersUpperBound ) {
   return (guess)
 }
 
+
 analyzeOneCondition<- function(df, numItemsInStream) {
   # Calculate the domain of possible serial position errors.
   possibleTargetSP<- sort(unique(df$targetSP))
@@ -38,7 +39,7 @@ analyzeOneCondition<- function(df, numItemsInStream) {
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   
   # Set some model-fitting parameters.
-  nReplicates <- 10# 100# Number of times to repeat each fit with different starting values
+  nReplicates <- 3# 100# Number of times to repeat each fit with different starting values
   fitMaxIter <- 10^4# Maximum number of fit iterations
   fitMaxFunEvals <- 10^4# Maximum number of model evaluations
   
@@ -47,7 +48,11 @@ analyzeOneCondition<- function(df, numItemsInStream) {
     #Calculate parameter guess
     startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
     fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams)
-    return( data.frame(efficay=fit[1], latency=fit[2], precision=fit[3], val=fit$value) )
+    fit<- fit$content
+    warns<- fit$warnings
+    print(warns)
+    print(fit)
+    return( data.frame(efficay=fit[1], latency=fit[2], precision=fit[3], val=fit$value, warnings="None") )
   }
   
   for (n in 1:nReplicates) { #fit the model many times (with different starting parameters)

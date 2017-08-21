@@ -28,7 +28,10 @@ test_that("Decent estimates", {
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   
   fit<- fitModel(df$SPE, minSPE, maxSPE, pseudoUniform, startingParams)
-
+  fit<- fit$content 
+  warns<- fit$warnings
+  print(fit)
+  
   #Check that standard fit method gives decent results
   expectedParamEstimates<- c(.84,.48,.99) # c(.37,1.2,.017)  #from L-BFGS-B
   LBFGSBparams<-  fit["L-BFGS-B",]
@@ -38,7 +41,6 @@ test_that("Decent estimates", {
   
   # A kkt1 of True means that the final gradient was close to 0 (the optimizer found an extremum),
   #a kkt2 of True means that the Hessian is positive definite (it's a minimum). Both should be True.
-  print(fit)
   expect_that( fit["L-BFGS-B","kkt1"], is_true() ) #means that the final gradient was close to 0 (the optimizer found an extremum)
 }    
 )

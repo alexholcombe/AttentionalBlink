@@ -51,11 +51,12 @@ source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 #Break data by condition to  send to fitModel
 condtnVariableNames <- c("subject","target", "condition") # c("expDegrees")
 
-estimates<- df %>% 
+estimates<- df %>% filter(subject=="AA") %>%
   group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
   do(analyzeOneCondition(.,numItemsInStream))
 
 estimates<-data.frame(estimates)
+estimates
 #round all numeric field for easy reading
 data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
 

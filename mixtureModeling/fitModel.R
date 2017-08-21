@@ -7,6 +7,18 @@ if (basename(getwd()) != "mixtureModeling") {
 }
 source( file.path(pathNeeded,"pdf_Mixture_Single.R") ) 
 
+#way in R to return values from a function and the warnings
+withWarnings <- function(expr) {
+  myWarnings <- NULL
+  wHandler <- function(w) {
+    myWarnings <<- c(myWarnings, list(w))
+    invokeRestart("muffleWarning")
+  }
+  val <- withCallingHandlers(expr, warning = wHandler)
+  list(content = val, warnings = myWarnings)
+} 
+
+
 fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
 {
   #Create function that calculates log likelihood of data given particular parameter values,
@@ -30,10 +42,12 @@ fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
     ctrl<- list( trace=0, all.methods=TRUE, save.failures=TRUE ) 
   }
 
-  fit <- optimx(parameterGuess, fn= pdf_normmixture_single_par, method=c('L-BFGS-B'),
-                lower=parametersLowerBound, upper=parametersUpperBound,
-                control=ctrl)
-
+  
+  fit <- withWarnings(
+                optimx(parameterGuess, fn= pdf_normmixture_single_par, method=c('L-BFGS-B'),
+                  lower=parametersLowerBound, upper=parametersUpperBound,
+                  control=ctrl)
+           )
   return(fit)                    
 }
 
