@@ -23,13 +23,42 @@ test_that("Problematic cases", {
   #data<- readRDS( file.path("mixtureModeling/tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
   library(dplyr)
   numItemsInStream<- length( data$letterSeq[1,] )  
-  df<- data
+  data<- data
   #It seems that to work with dplyr, can't have array field like letterSeq
-  df$letterSeq<- NULL
-  BA22 <- df %>% filter(subject=="BA" & target==2 & condition==2)
-  analyzeOneCondition(BA22,numItemsInStream)
+  data$letterSeq<- NULL
+  BA22 <- data %>% filter(subject=="BA" & target==2 & condition==2)
+  estimates<- analyzeOneCondition(BA22,numItemsInStream)
   #plot histogram
+  require(ggplot2)
+  df<-BA22
+  #sanity check
+  minSPE<- -17; maxSPE<- 17
+  g=ggplot(df, aes(x=SPE))  
+  #g<-g+facet_grid(condName~exp)
+  g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
+  g
+  
   #plot dnorm and guessing distribution
+  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
+  #unitise it
+  pseudoUniform<-pseudoUniform/sum(pseudoUniform)
+  pseudoUniform
+  #calculate points at appropriate height for this data
+  guessingThis<- (1-estimates$p1) * pseudoUniform * length(df$SPE)
+  dg<-data.frame(x=minSPE:maxSPE, SPE=guessingThis)
+  g<-g+ geom_line(data=dg,aes(x=x,y=SPE),color="red")
+  g
+  #calculate fitted Gaussian distribution
+  grain<-0.1
+  domain<-seq(minSPE,maxSPE,grain)
+  gaussianThis<- dnorm(domain,estimates$p2,estimates$p3)
+  #Calculate points at appropriate height fot this data
+  gaussianThis<- gaussianThis * estimates$p1 * length(df$SPE)
+  gaussianThis<-data.frame(x=domain, SPE=gaussianThis)
+  g<-g+ geom_line(data=gaussianThis,aes(x=x,y=SPE),color="green")
+  g
+  #Calculate sum
+  
 )
 
 
