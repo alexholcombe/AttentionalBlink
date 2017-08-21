@@ -1,4 +1,4 @@
-checkAllGroupsOccurEquallyOften<- function(df,colNames,dropZeros=FALSE) {
+checkAllGroupsOccurEquallyOften<- function(df,colNames,dropZeros=FALSE,verbose=FALSE) {
   #in data.frame df, check whether the factors in the list colNames reflect full factorial design (all combinations of levels occur equally often)
   #
   #dropZeros is useful if one of the factors nested in the others. E.g. testing different speeds for each level of    
@@ -21,6 +21,9 @@ checkAllGroupsOccurEquallyOften<- function(df,colNames,dropZeros=FALSE) {
   } else {
     print(paste(colNamesStr,"NOT fully crossed,",length(unique(t)),'distinct repetition numbers.'  ))
     ans <- FALSE
+    if (verbose) {
+      print(t)
+    }
   } 
   return(ans)
 }

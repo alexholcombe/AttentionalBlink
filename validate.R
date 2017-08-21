@@ -37,11 +37,11 @@ df<- data
 #It seems that to work with dplyr, can't have array field like letterSeq
 df$letterSeq<- NULL
 
-source('mixtureModeling/alexHelpers.R')
-checkAllGroupsOccurEquallyOften(df,c("target","condition","subject"),dropZeros=FALSE) 
+source('mixtureModeling/checkCounterbalancing.R')
+checkAllGroupsOccurEquallyOften(df,c("subject","target","condition"),dropZeros=FALSE,verbose=TRUE) 
 
-checkAllGroupsOccurEquallyOften(df,c("target","condition","subject","targetSP"),dropZeros=FALSE) 
-
+#checkAllGroupsOccurEquallyOften(df,c("targetSP","target","condition","subject"),dropZeros=FALSE,verbose=TRUE) 
+#targetSP is not counterbalanced. Instead, it's random
 
 library(dplyr)
 
