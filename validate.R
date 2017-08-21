@@ -29,33 +29,68 @@ if (directFromMAT) {  #Have full code for importing lots of MAT Files in backwar
   data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
 }
 #Would be nice to add my helper function to take note of whether counterbalanced
+#https://stackoverflow.com/questions/17185829/check-that-all-combinations-occur-equally-often-for-specified-columns-of-a-dataf/17185830#17185830
+
 
 numItemsInStream<- length( data$letterSeq[1,] )  
 df<- data
 #It seems that to work with dplyr, can't have array field like letterSeq
 df$letterSeq<- NULL
 
+source('mixtureModeling/alexHelpers.R')
+checkAllGroupsOccurEquallyOften(df,c("target","condition","subject"),dropZeros=FALSE) 
+
+checkAllGroupsOccurEquallyOften(df,c("target","condition","subject","targetSP"),dropZeros=FALSE) 
+
 
 library(dplyr)
 
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 
-bestEstimates<- analyzeOneCondition(df, numItemsInStream)
 
 #Break data by condition to  send to fitModel
-condtnVariableNames <- c("target", "condition") # c("expDegrees")
+condtnVariableNames <- c("subject","target", "condition") # c("expDegrees")
 
 estimates<- df %>% 
   group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
   do(analyzeOneCondition(.,numItemsInStream))
 
+estimates<-data.frame(estimates)
+#round all numeric field for easy reading
+data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
 
-# the negative log likelihood of the fitted model.
 
-
+#improve the column names, to match MATLAB column names
+#mutate target to Stream
+names(estimates)[names(estimates) == 'target'] <- 'stream'
+estimates <- estimates %>% mutate( stream =ifelse(stream==1, "Left","Right") )
+#mutate condition to Orientation
+names(estimates)[names(estimates) == 'condition'] <- 'orientation'
+estimates <- estimates %>% mutate( orientation =ifelse(orientation==1, "Canonical","Inverted") )
 
 #Load in Chris-created MATLAB parameter estimates
 load(MATLABmixtureModelOutput, verbose=FALSE)
 #join into single long dataframe
 results_MATLAB<- merge(efficacy.long,latency.long)
 results_MATLAB<- merge(results_MATLAB,precision.long)
+results_MATLAB<- data.frame(results_MATLAB)
+names(results_MATLAB) <- tolower(names(results_MATLAB)) #lower case the column names
+results_MATLAB<-results_MATLAB %>% mutate(efficacy=efficacy/100,latency=latency/100,precision=precision/100)
+
+#Compare MATLAB parameter estimates to R
+#I suppose by 
+merged<- merge(estimates,results_MATLAB)  
+merged<- merged %>% mutate( effDiff = p1-efficacy, latDiff= p2-latency, preDiff= p3-precision )
+
+#show differences columns only
+diffs<- select(merged, ends_with("Diff"))
+round(diffs,3)*100
+
+#calc discrepancies
+meanDiscrepancy<- summarise_all(abs(diffs),mean)
+biasDiff<- summarise_all(diffs,mean)
+meanDiscrepancy
+biasDiff
+
+#To-do print out which subjects,conditions crapping out on
+
