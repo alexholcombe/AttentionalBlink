@@ -38,6 +38,7 @@ test_that("Problematic cases", {
   g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
   g
   
+  source( file.path(pathNeeded,"histogramPlotting.R") )
   #plot dnorm and guessing distribution
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   #unitise it
@@ -45,20 +46,29 @@ test_that("Problematic cases", {
   pseudoUniform
   #calculate points at appropriate height for this data
   guessingThis<- (1-estimates$p1) * pseudoUniform * length(df$SPE)
-  dg<-data.frame(x=minSPE:maxSPE, SPE=guessingThis)
-  g<-g+ geom_line(data=dg,aes(x=x,y=SPE),color="red")
+  guessingThis<-data.frame(x=minSPE:maxSPE, SPE=guessingThis)
+  g<-g+ geom_line(data=dg,aes(x=x,y=SPE),color="yellow",size=1.2)
   g
   #calculate fitted Gaussian distribution
   grain<-0.1
   domain<-seq(minSPE,maxSPE,grain)
-  gaussianThis<- dnorm(domain,estimates$p2,estimates$p3)
+  gaussianThis<- gaussianScaledForData(estimates$p1,estimates$p2,estimates$p3,df$SPE,minSPE,maxSPE,grain) 
+  
+  #gaussianThis<- dnorm(domain,estimates$p2,estimates$p3)
   #Calculate points at appropriate height fot this data
-  gaussianThis<- gaussianThis * estimates$p1 * length(df$SPE)
-  gaussianThis<-data.frame(x=domain, SPE=gaussianThis)
-  g<-g+ geom_line(data=gaussianThis,aes(x=x,y=SPE),color="green")
+  #gaussianThis<- gaussianThis * estimates$p1 * length(df$SPE)
+  #gaussianThis<-data.frame(x=domain, SPE=gaussianThis)
+  g<-g+ geom_line(data=gaussianThis,aes(x=x,y=SPE),color="blue",size=1.2)
   g
   #Calculate sum
-  
+  #Need the quantized Gaussian
+  grain<-1
+  gaussianThis<- gaussianScaledForData(estimates$p1,estimates$p2,estimates$p3,df$SPE,minSPE,maxSPE,grain) 
+  combined<-guessingThis
+  combined$SPE <- combined$SPE + gaussianThis$SPE
+  g<-g+ geom_point(data=combined,aes(x=x,y=SPE),color="green",size=1.7)
+  g  
+
 )
 
 
