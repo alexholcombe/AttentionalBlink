@@ -17,3 +17,9 @@ estimates<- analyzeOneCondition(df, 24)
 estimates
 
 #Test with a problematic dataset
+
+
+#BO,1,1
+estimates %>% filter(round(p1,3)==0.280) #BA,2,2 or BE,2,1
+#1e-05  4 1e-05 334.385593546 but didn't end up being the winning replicate
+#Inspect AD,2,1 and AI,1,2 because very poor fit

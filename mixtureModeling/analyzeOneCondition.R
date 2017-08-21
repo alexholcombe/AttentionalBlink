@@ -49,9 +49,8 @@ analyzeOneCondition<- function(df, numItemsInStream) {
     startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
     fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams)
     fit<- fit$content
-    warns<- fit$warnings
-    print(warns)
     print(fit)
+    warns<- fit$warnings
     return( data.frame(efficay=fit[1], latency=fit[2], precision=fit[3], val=fit$value, warnings="None") )
   }
   

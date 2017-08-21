@@ -31,7 +31,6 @@ if (directFromMAT) {  #Have full code for importing lots of MAT Files in backwar
 #Would be nice to add my helper function to take note of whether counterbalanced
 #https://stackoverflow.com/questions/17185829/check-that-all-combinations-occur-equally-often-for-specified-columns-of-a-dataf/17185830#17185830
 
-
 numItemsInStream<- length( data$letterSeq[1,] )  
 df<- data
 #It seems that to work with dplyr, can't have array field like letterSeq
@@ -51,12 +50,18 @@ source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 #Break data by condition to  send to fitModel
 condtnVariableNames <- c("subject","target", "condition") # c("expDegrees")
 
-estimates<- df %>% filter(subject=="AA") %>%
+estimates<- df %>%    #filter(subject=="AA") %>%
   group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
   do(analyzeOneCondition(.,numItemsInStream))
 
 estimates<-data.frame(estimates)
 estimates
+#Cases with mysterious errors
+estimates %>% filter(round(p1,4)==0.9791) #BO,1,1
+estimates %>% filter(round(p1,3)==0.280) #BA,2,2 or BE,2,1
+#1e-05  4 1e-05 334.385593546 but didn't end up being the winning replicate
+#Inspect AD,2,1 and AI,1,2 because very poor fit
+
 #round all numeric field for easy reading
 data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
 
