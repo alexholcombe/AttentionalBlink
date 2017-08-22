@@ -1,5 +1,5 @@
 
-
+library(optimx)
 #Test might not work because path gets set to mixtureModeling/tests/
 if (basename(getwd()) != "tests") {
   pathNeeded<- "mixtureModeling"

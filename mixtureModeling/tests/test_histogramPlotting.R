@@ -43,34 +43,6 @@ g
 ######
 
 
-#Use ggplot to plot every condition*subject separately
-df<-data 
-#df<-data %>% filter(subject=="BE" | subject=="BA")
-
-#So I actually need all fits in one dataframe,
-# doesn't have to be the same dataframe as the SPEs (and can't be, because different format)
-#After group_by, subsetted df needs to be fit
-tit<-"subjs" #Calculate fit separately for each group
-quartz(title=tit,width=12,height=6) 
-
-#df<- data %>% filter(subject < "AO")
-#df<- data %>% filter(subject >= "AO" & subject <= "BD")
-df<- data %>% filter(subject > "BD")
-fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
-  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
-
-g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject + stream)
-#plot data
-g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
-sz=.3
-g<-g+ geom_line(data=fitDfs,aes(x=x,y=guessingFreq),color="yellow",size=sz)
-g<-g+ geom_line(data=fitDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
-g<-g+ geom_point(data=fitDfs,aes(x=x,y=combinedFitFreq),color="green",size=sz)
-g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
-g
-#####################
-
-
 #Check troublesome cases.
 
 # BE,2,1

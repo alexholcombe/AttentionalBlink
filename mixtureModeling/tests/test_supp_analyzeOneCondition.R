@@ -31,8 +31,22 @@ test_that("Fits entire experiment worth of data fine", {
 
 
 test_that("Handles terrible subjects", {
-  
 
+  data<- #.mat file been preprocessed into melted long dataframe
+    readRDS( file.path(pathNeeded,"tests", "alexImportBackwardsPaper2E1excludedSs.Rdata") ) 
+  library(dplyr)
+  numItemsInStream<- length( data$letterSeq[1,] )  
+  data<- data
+  #It seems that to work with dplyr, can't have array field like letterSeq
+  data$letterSeq<- NULL
+  
+  estimates<-data %>% group_by(subject,target,condition) %>% 
+    do(analyzeOneCondition(.,numItemsInStream))
+  
+  #round numeric columns so easier to view
+  data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
+  
+  expect_that( all(estimates$warnings == "None"), is_true() )  
   
 } 
 )
