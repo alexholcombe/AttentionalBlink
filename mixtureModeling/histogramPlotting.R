@@ -71,7 +71,9 @@ calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
   pseudoUniform<-pseudoUniform/sum(pseudoUniform)
   #calculate points at appropriate height for this data
   guessingThis<- (1-efficacy) * pseudoUniform * length(df$SPE)
-  fitDFs<-data.frame(x=minSPE:maxSPE, guessingFreq=guessingThis) 
+  fitDFs<-data.frame(x=minSPE:maxSPE, 
+                     guessingFreq=guessingThis,
+                     efficacy=efficacy, latency=latency, precision=precision) 
   
   #Calculate Gaussian and sum
   #Need the quantized Gaussian

@@ -7,7 +7,6 @@ if (basename(getwd()) != "tests") {
 }
 
 data<- readRDS( file.path(pathNeeded,"tests", "alexImportBackwardsPaper2E1excludedSs.Rdata") ) #.mat file been preprocessed into melted long dataframe
-library(dplyr)
 numItemsInStream<- length( data$letterSeq[1,] )  
 #It seems that to work with dplyr, can't have array field like letterSeq
 data$letterSeq<- NULL
@@ -17,6 +16,8 @@ source(file.path(pathNeeded,"analyzeOneCondition.R"))
 
 #plot histogram
 require(ggplot2)
+library(dplyr)
+
 minSPE<- -17; maxSPE<- 17
 
 #Give conditions better names than 1 and 2
@@ -38,16 +39,32 @@ tit<-"subjs" #Calculate fit separately for each group
 quartz(title=tit,width=12,height=6) 
 #df<- data %>% filter(subject < "AO")
 #df<- data %>% filter(subject >= "AO" & subject <= "BD")
-df<- data %>% filter(subject > "BD")
+#df<- data %>% filter(subject > "BD")
+
+df<- data %>% dplyr::filter(subject > "BD")
 fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
   do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
-gsz=.3
+g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
+
+#plot data
+g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
+sz=.3
 g<-g+ geom_line(data=fitDfs,aes(x=x,y=guessingFreq),color="yellow",size=sz)
 g<-g+ geom_line(data=fitDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 g<-g+ geom_point(data=fitDfs,aes(x=x,y=combinedFitFreq),color="green",size=sz)
 g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
-g
+numPlots<-10
+fontSz = 30/numPlots
+g + geom_text(data=fitDfs,aes(x=0,y=20, 
+                              label = paste0(round(efficacy,2))), size=fontSz, parse = TRUE)
+g + geom_text(data=fitDfs,aes(x=0,y=20, 
+                              label = paste0(round(latency,1))), size=fontSz, parse = TRUE)
+
+g + geom_text(data=fitDfs,aes(x=x,y=combinedFitFreq, 
+                              label = paste(round(efficacy,2), " = efficacy ", round(latency,2) , "=latency", sep = "")),
+              parse = TRUE)
+
 
 #I should probably preserve the estimates, then text annotate them
 #Examine estimates
