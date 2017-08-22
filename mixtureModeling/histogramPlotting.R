@@ -40,7 +40,7 @@ plotHistWithFit<- function(SPE,minSPE,maxSPE,targetSP,numItemsInStream,efficacy,
   domain<-seq(minSPE,maxSPE,grain)
   #Calculate fitted points at appropriate height for this data
   gaussianThis<- gaussianScaledForData(efficacy,latency,precision,SPE,minSPE,maxSPE,grain) 
-  g<-g+ geom_line(data=gaussianThis,aes(x=x,y=SPE),color="blue",size=1.2)
+  g<-g+ geom_line(data=gaussianThis,aes(x=x,y=SPE),color="lightblue",size=1.2)
 
   #Calculate sum
   #Need the quantized Gaussian

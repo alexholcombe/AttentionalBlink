@@ -44,3 +44,14 @@ test_that("Decent estimates", {
   expect_that( fit["L-BFGS-B","kkt1"], is_true() ) #means that the final gradient was close to 0 (the optimizer found an extremum)
 }    
 )
+
+test_that("Fits entire experiment worth fine", {
+  
+  
+  
+  
+  
+  
+  
+}
+)

@@ -1,7 +1,13 @@
-pathThis<-"mixtureModeling/"  #From directory of this file, which should be mixtureModeling/
 
-source( file.path(pathThis,"createGuessingDistribution.R")  )
-source( file.path(pathThis,"fitModel.R") )
+#Compensate for path getting set to mixtureModeling/tests/ by testthat
+if (basename(getwd()) != "tests") { #directory of this file, which should be mixtureModeling/
+  pathNeeded<- "mixtureModeling" 
+} else { 
+  pathNeeded <- ".." 
+}
+
+source( file.path(pathNeeded,"createGuessingDistribution.R")  )
+source( file.path(pathNeeded,"fitModel.R") )
 
 # Set PARAMETER BOUNDS. Pat apparently found these were needed to 
 # prevent over-fitting to blips in the distributions. These
