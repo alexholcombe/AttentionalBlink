@@ -45,13 +45,5 @@ test_that("Decent estimates", {
 }    
 )
 
-test_that("Fits entire experiment worth fine", {
+
   
-  
-  
-  
-  
-  
-  
-}
-)

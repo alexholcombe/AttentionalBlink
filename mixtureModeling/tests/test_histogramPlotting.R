@@ -29,7 +29,7 @@ data <- data %>% mutate( stream =ifelse(stream==1, "Left","Right") )
 names(data)[names(data) == 'condition'] <- 'orientation'
 data <- data %>% mutate( orientation =ifelse(orientation==1, "Canonical","Inverted") )
 
-#Test out on one subject
+#Test on one subject
 df<-data %>% filter(subject=="BE")
 
 fitDfs<- calcFitDataframes(df,minSPE,maxSPE,numItemsInStream)
