@@ -38,6 +38,7 @@ test_that("Decent estimates", {
   discrepancy <- LBFGSBparams[1:3] - expectedParamEstimates
   discrepancyLow <- all( abs( discrepancy ) < .1 )
   expect_that( discrepancyLow, is_true() )
+  #expect_that( roots, equals(-3000.01, tolerance  = 0.1) )
   
   # A kkt1 of True means that the final gradient was close to 0 (the optimizer found an extremum),
   #a kkt2 of True means that the Hessian is positive definite (it's a minimum). Both should be True.

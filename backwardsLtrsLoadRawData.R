@@ -1,20 +1,19 @@
 #Loads raw data from MATLAB files for second backwards paper first experiment
 require(R.matlab)
 
-userNameOnMachineOnWayToGoogleDrive<- "alexh" #"admin" on the machine that Chris Bush used
 GoogleDrivePath<-"/Google\ Drive/Backwards\ paper/"
 
 #random orientation each trial. First experiment of second backwards-letters paper
-
-directoryOfRawData<- paste0("/Users/",userNameOnMachineOnWayToGoogleDrive,GoogleDrivePath,
+directoryOfRawData<- paste0("~",GoogleDrivePath,
                             "secondPaper/E1/Data/RawData/Data/")
 #raw data path containing .mat file for each subject
 rawDataPath <- file.path(directoryOfRawData)
 
+#define function to be used below
 turnMATintoMeltedDataframe<- function(fromMAT) {
   #It was imported as a list of lists
   mydata<-fromMAT
-  numTrials<- length( unlist( data$allConditions ) )
+  numTrials<- length( unlist( mydata$allConditions ) )
   #Some of the list members are one-off fields pertaining to entire experiment. Remove them, put in miscInfo
   miscInfo <- list()
   membersToDelete<- list()
@@ -84,7 +83,6 @@ turnMATintoMeltedDataframe<- function(fromMAT) {
   names(E)[names(E) == 'allConditions'] <- 'condition'
   return(E)
 }
-temp<-turnMATintoMeltedDataframe(rawDataLoad)
 
 files <- dir(path=rawDataPath,pattern='.mat')  #find all data files in this directory
 dfAll<-data.frame()

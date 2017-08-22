@@ -30,6 +30,13 @@ test_that("Fits entire experiment worth of data fine", {
 )
 
 
+test_that("Handles terrible subjects", {
+  
+
+  
+} 
+)
+
 
 
   

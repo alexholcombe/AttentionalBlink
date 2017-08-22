@@ -43,7 +43,7 @@ fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
     ctrl<- list( trace=0, all.methods=TRUE, save.failures=TRUE ) 
   }
 
-  
+  #do the fit
   fit <- withWarnings(
                 optimx(parameterGuess, fn= pdf_normmixture_single_par, method=c('L-BFGS-B'),
                   lower=parametersLowerBound, upper=parametersUpperBound,
