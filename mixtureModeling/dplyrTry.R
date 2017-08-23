@@ -43,3 +43,8 @@ ctrl<- list( trace=0, all.methods=FALSE, save.failures=TRUE )
 ans <- optimx(fn = function(x) sum(x*x), par = 1:2, method="BFGS", control=ctrl)
 coef(ans)
 
+#############
+p <- ggplot(mtcars, aes(wt, mpg, label = rownames(mtcars)))
+
+p + geom_text(aes(label = paste(wt, "^(", cyl, ")", sep = "")),
+              parse = TRUE)

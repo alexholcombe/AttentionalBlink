@@ -41,33 +41,37 @@ quartz(title=tit,width=12,height=6)
 #df<- data %>% filter(subject >= "AO" & subject <= "BD")
 #df<- data %>% filter(subject > "BD")
 
-df<- data %>% dplyr::filter(subject > "BD")
+df<- data %>% dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
 fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
   do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
-g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
-
 #plot data
+g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
 g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
 sz=.3
 g<-g+ geom_line(data=fitDfs,aes(x=x,y=guessingFreq),color="yellow",size=sz)
 g<-g+ geom_line(data=fitDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 g<-g+ geom_point(data=fitDfs,aes(x=x,y=combinedFitFreq),color="green",size=sz)
 g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
-numPlots<-10
-fontSz = 30/numPlots
-g + geom_text(data=fitDfs,aes(x=0,y=20, 
-                              label = paste0(round(efficacy,2))), size=fontSz, parse = TRUE)
-g + geom_text(data=fitDfs,aes(x=0,y=20, 
-                              label = paste0(round(latency,1))), size=fontSz, parse = TRUE)
-
-g + geom_text(data=fitDfs,aes(x=x,y=combinedFitFreq, 
-                              label = paste(round(efficacy,2), " = efficacy ", round(latency,2) , "=latency", sep = "")),
-              parse = TRUE)
+numGroups<- length(table(df$orientation,df$subject,df$stream))
+fontSz = 70/numGroups
+#uses plotmath, not just string interpretation http://ggplot2.tidyverse.org/reference/geom_text.html
+g +geom_text(data=fitDfs,aes(x=-8,y=30, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=fitDfs,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
+  geom_text(data=fitDfs,aes(x=-8,y=25, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 
 
-#I should probably preserve the estimates, then text annotate them
+
+
+
+g + geom_text(data=fitDfs,aes(x=-5,y=30, label = paste("mu==", round(efficacy,2), sep = "")), parse = TRUE,size=fontSz)) +
+    geom_text(data=fitDfs,aes(x=-5,y=27,    label = round(latency,2)),  parse = TRUE,size=fontSz) +
+    geom_text(data=fitDfs,aes(x=-5,y=25,    label = round(precision,2)),  parse = TRUE,size=fontSz)
+
+
 #Examine estimates
+#They're in fitDfs but need to be collapsed
 #round numeric columns so easier to view
+estimates<-fitDfs %>% select(subject,orientation,stream,
 data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
 g
