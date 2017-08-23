@@ -37,7 +37,6 @@ df<-data
 # doesn't have to be the same dataframe as the SPEs (and can't be, because different format)
 #After group_by, subsetted df needs to be fit
 tit<-"subjs" #Calculate fit separately for each group
-quartz(title=tit,width=12,height=6) 
 #df<- data %>% filter(subject < "AO")
 #df<- data %>% filter(subject >= "AO" & subject <= "BD")
 #df<- data %>% filter(subject > "BD")
@@ -47,6 +46,7 @@ fitDfs<- df %>% group_by(orientation,stream,subject) %>%
   do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 #plot data
+quartz(title=tit,width=12,height=6) 
 g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
 g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
 sz=.3

@@ -1,4 +1,6 @@
-Porting Goodbourn's mixture model MATLAB code to R.
+Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MATLAB. [Certifiedwaif](https://github.com/certifiedwaif/) [ported](https://github.com/certifiedwaif/AttentionalBlink) it to R.
+
+## Issues
 
 Still having trouble capturing error msgs like "Error in eigen(nhatend) : infinite or missing values in 'x'"
 
