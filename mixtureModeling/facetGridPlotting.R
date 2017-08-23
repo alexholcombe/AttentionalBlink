@@ -27,7 +27,8 @@ data <- data %>% mutate( stream =ifelse(stream==1, "Left","Right") )
 names(data)[names(data) == 'condition'] <- 'orientation'
 data <- data %>% mutate( orientation =ifelse(orientation==1, "Canonical","Inverted") )
 
-
+###########################################################################################
+#Example facet_grid fitting and plotting
 #Use ggplot to plot every condition*subject separately
 df<-data 
 #df<-data %>% filter(subject=="BE" | subject=="BA")
@@ -54,24 +55,21 @@ g<-g+ geom_line(data=fitDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 g<-g+ geom_point(data=fitDfs,aes(x=x,y=combinedFitFreq),color="green",size=sz)
 g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
 numGroups<- length(table(df$orientation,df$subject,df$stream))
-fontSz = 70/numGroups
+fontSz = 80/numGroups
 #uses plotmath, not just string interpretation http://ggplot2.tidyverse.org/reference/geom_text.html
 g +geom_text(data=fitDfs,aes(x=-8,y=30, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=fitDfs,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
   geom_text(data=fitDfs,aes(x=-8,y=25, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 
-
-
-
-
-g + geom_text(data=fitDfs,aes(x=-5,y=30, label = paste("mu==", round(efficacy,2), sep = "")), parse = TRUE,size=fontSz)) +
-    geom_text(data=fitDfs,aes(x=-5,y=27,    label = round(latency,2)),  parse = TRUE,size=fontSz) +
-    geom_text(data=fitDfs,aes(x=-5,y=25,    label = round(precision,2)),  parse = TRUE,size=fontSz)
-
+#Without plotmath
+#g + geom_text(data=fitDfs,aes(x=-5,y=30, label = round(efficacy,2), size=fontSz)) +
+#    geom_text(data=fitDfs,aes(x=-5,y=27,    label = round(latency,2)), size=fontSz) +
+#    geom_text(data=fitDfs,aes(x=-5,y=25,    label = round(precision,2)), size=fontSz)
 
 #Examine estimates
 #They're in fitDfs but need to be collapsed
 #round numeric columns so easier to view
-estimates<-fitDfs %>% select(subject,orientation,stream,
-data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
-g
+estimates<- fitDfs %>% select(-x,-guessingFreq,-gaussianFreq,-combinedFitFreq)
+estimates<- unique(estimates)
+source(file.path(pathNeeded,"helpers.R"))
+roundDataFrame(estimates,2)

@@ -2,8 +2,6 @@ rm(list=ls()) #clear all variables
 #random orientation each trial. First experiment of second backwards-letters paper
 
 mixModelingPath<- file.path("mixtureModeling")
-
-
 MATLABmixtureModelOutputPath<-"~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/MixModData"
 importedToRbyChris <- "allParams.RData"
 MATLABmixtureModelOutput<- file.path( MATLABmixtureModelOutputPath, importedToRbyChris )
