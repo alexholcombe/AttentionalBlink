@@ -19,21 +19,24 @@ withWarnings <- function(expr) {
   list(content = val, warnings = myWarnings)
 } 
 
+#pseudoUniform
+#likelihood <- pdf_Mixture_Single(SPEs, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
+
 
 fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
 {
   #Create function that calculates log likelihood of data given particular parameter values,
   #to pass to optim
-  pdf_normmixture_single_par <- function(par)
+  pdf_normmixture_ready_for_optim <- function(par)
   {
     p <- par[1]
     mu <- par[2]
     sigma <- par[3]
-    result <- pdf_Mixture_Single(SPEs, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
+    likelihood <- pdf_Mixture_Single(SPEs, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
     # Sometimes pdf_normmixture_single returns 0. And the log of 0 is -Inf. So we add
     # 1e-8 to make the value we return finite. This allows optim() to successfully
     # optimise the function.
-    return(-sum(log(result + 1e-8)))
+    return(-sum(log(likelihood + 1e-8)))
   }                
   
   #Traverse parameter space to find parameter values that maximise the log likelihood
@@ -45,7 +48,8 @@ fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
 
   #do the fit
   fit <- withWarnings(
-                optimx(parameterGuess, fn= pdf_normmixture_single_par, method=c('L-BFGS-B'),
+                optimx(parameterGuess, fn= pdf_normmixture_ready_for_optim,
+                  method=c('L-BFGS-B'),
                   lower=parametersLowerBound, upper=parametersUpperBound,
                   control=ctrl)
            )

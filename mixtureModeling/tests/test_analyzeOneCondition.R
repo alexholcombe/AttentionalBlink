@@ -7,6 +7,7 @@ if (basename(getwd()) != "tests") {
 }
 
 source(file.path(pathNeeded,"analyzeOneCondition.R"))
+source(file.path(pathNeeded,"parameterBounds.R"))
 
 df<-readRDS(file.path(pathNeeded,"tests","exampleSubject.Rdata"))
 library(dplyr)
@@ -21,8 +22,8 @@ test_that("Problematic cases", {
   data<- data
   #It seems that to work with dplyr, can't have array field like letterSeq
   data$letterSeq<- NULL
-  BA22 <- data %>% filter(subject=="BA" & target==2 & condition==2)
-  estimates<- analyzeOneCondition(BA22,numItemsInStream)
+  BA22 <- data %>% dplyr::filter(subject=="BA" & target==2 & condition==2)
+  estimates<- analyzeOneCondition(BA22,numItemsInStream,parameterBounds())
   expect_that( estimates$warnings == "None", is_true() )
 }
 )

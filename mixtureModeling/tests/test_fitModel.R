@@ -11,6 +11,8 @@ if (basename(getwd()) != "tests") {
 }
 source(file.path(pathNeeded,"fitModel.R"))
 
+
+
 test_that("Decent estimates", {
   
   df<-readRDS( file.path(pathNeeded,"tests","exampleSubject.Rdata") )

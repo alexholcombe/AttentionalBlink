@@ -9,31 +9,11 @@ if (basename(getwd()) != "tests") { #directory of this file, which should be mix
 source( file.path(pathNeeded,"createGuessingDistribution.R")  )
 source( file.path(pathNeeded,"fitModel.R") )
 
-# Set PARAMETER BOUNDS. Pat apparently found these were needed to 
-# prevent over-fitting to blips in the distributions. These
-# values are about right in most cases, but might need some tweaking if
-# e.g. you were analysing data with an unusually high or low item rate.
-muBound <- 4   #will only consider -4 to +4 for mu 
-sigmaBound <- 4 #will only consider 0 to 4 for sigma
 
-smallNonZeroNumber <- 10^-5# Useful number for when limits can't be exactly zero but can be anything larger
-#efficacy,          latency,    precision
-parametersLowerBound <- c(smallNonZeroNumber, -muBound, smallNonZeroNumber)
-parametersUpperBound <- c(1,                   muBound, sigmaBound)
-# END PARAMETER BOUNDS
-
-# Randomise starting values for each parameter.
-parametersGuess<- function( parametersLowerBound, parametersUpperBound ) {
-  guess<- rep(0,3)
-  for (i in 1:length(guess)) {
-    #random value between min and max possible value
-    guess[i] <- runif(n=1, min=parametersLowerBound[i], max=parametersUpperBound[i] ) 
-  } 
-  return (guess)
-}
+source( file.path(pathNeeded,"parametersGuess.R") )
 
 
-analyzeOneCondition<- function(df, numItemsInStream) {
+analyzeOneCondition<- function(df, numItemsInStream, paramBounds) {
   # Calculate the domain of possible serial position errors.
   possibleTargetSP<- sort(unique(df$targetSP))
   minTargetSP <- min(possibleTargetSP)
@@ -52,7 +32,7 @@ analyzeOneCondition<- function(df, numItemsInStream) {
   #Use RT to check which is left target and which is right target
   fitModelDF <- function( SPE, minSPE, maxSPE ) {
     #Calculate parameter guess
-    startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
+    startingParams<- parametersGuess( paramBounds$lower, paramBounds$upper )
     fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams)
     fit<- fit$content
     warns<- fit$warnings
@@ -76,5 +56,5 @@ analyzeOneCondition<- function(df, numItemsInStream) {
   return( bestEstimate )
 }
 
-
-#bestEstimates<- analyzeOneCondition(df, numItemsInStream)
+likelihoodOneCondition<- function(df, numItemsInStream) {
+}

@@ -1,17 +1,18 @@
 ---
-title: "compareMATLABtoR"
+title: "compare MATLAB to R"
 author: "Alex Holcombe"
 date: "8/24/2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE,  comment = NA)
+# http://htmlpreview.github.io/?https://github.com/alexholcombe/MixtureModelRSVP/blob/master/compareMATLABtoR.html
 ```
 
 Import data
 
-```{r importData, echo=FALSE, message=FALSE}
+```{r importData, echo=FALSE}
 #rm(list=ls())
 
 mixModelingPath<- file.path("mixtureModeling")
@@ -50,6 +51,17 @@ estimates_MATLAB<- merge(estimates_MATLAB,precision.long)
 estimates_MATLAB<- data.frame(estimates_MATLAB)
 names(estimates_MATLAB) <- tolower(names(estimates_MATLAB)) #lower case the column names
 estimates_MATLAB<-estimates_MATLAB %>% mutate(efficacy=efficacy/100,latency=latency/100,precision=precision/100)
+
+```
+
+```{r, echo=FALSE}
+  #Unfortunately need the actual data for exact calculation of likelihood,
+  # because guessing distribution depends on targetSP for that particular condition
+  #Calculate the likelihood of the data given the MATLAB estimates
+  likelihood <- pdf_Mixture_Single(SPEs, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
+  #calculate the guessing distribution, empirically (based on actual targetSP)
+  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
+
 
 ```
 
