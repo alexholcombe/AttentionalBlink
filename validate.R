@@ -103,13 +103,13 @@ source('mixtureModeling/histogramPlotting.R')
 #Need to integrate estimates with df so that can plot curve fits without having to re-fit data 
 #merge estimates with df
 
-df<- merge(df,estimates)
+#plot data with R fit
+df<- merge(df,estimates) 
 
-df<- df %>% dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+df<- df %>% dplyr::filter(subject <="AD")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
 fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
         do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
-#plot data
 quartz(title=tit,width=12,height=6) 
 g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
 g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
@@ -121,8 +121,32 @@ g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=eleme
 numGroups<- length(table(df$orientation,df$subject,df$stream))
 fontSz = 80/numGroups
 #uses plotmath, not just string interpretation http://ggplot2.tidyverse.org/reference/geom_text.html
-g +geom_text(data=fitDfs,aes(x=-8,y=30, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+g +geom_text(data=fitDfs,aes(x=-8,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=fitDfs,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
-  geom_text(data=fitDfs,aes(x=-8,y=25, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
+  geom_text(data=fitDfs,aes(x=-8,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
+
+#plot data with MATLAB fit
+#swap estimate for MATLAB
+estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
+dg<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
+fitDfs<- dg %>% group_by(orientation,stream,subject) %>% 
+  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
+
+
+quartz(title="MATLAB",width=12,height=6) 
+g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
+g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
+sz=.3
+g<-g+ geom_line(data=fitDfs,aes(x=x,y=guessingFreq),color="yellow",size=sz)
+g<-g+ geom_line(data=fitDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
+g<-g+ geom_point(data=fitDfs,aes(x=x,y=combinedFitFreq),color="green",size=sz)
+g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
+numGroups<- length(table(df$orientation,df$subject,df$stream))
+fontSz = 80/numGroups
+#uses plotmath, not just string interpretation http://ggplot2.tidyverse.org/reference/geom_text.html
+g +geom_text(data=fitDfs,aes(x=-8,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=fitDfs,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
+  geom_text(data=fitDfs,aes(x=-8,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
+
 
 #TODO: Also should compare different-starting-point fit variability to R/MATLAB variability

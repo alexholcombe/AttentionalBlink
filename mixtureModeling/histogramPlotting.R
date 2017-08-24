@@ -60,14 +60,17 @@ fitAndPlotHist<- function(df,minSPE,maxSPE,numItemsInStream) {
 }
 
 #Use for for ggplot so can split and 
-calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream,estimates=NULL) {
+calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
   #Calculate dataframes containing the fitted curve, so can plot data and curves at same time
   #User can optionally supply estimates, otherwise need to do the fitting
-  if (missing(estimates)) {
+  if ( "efficacy" %in% names(df) ) { #user supplied efficacy
+    efficacy<- df$efficacy[1]
+    latency<- df$latency[1]; precision<- df$precision[1]
+  } else {
     estimates<- analyzeOneCondition(df,numItemsInStream)
+    efficacy<-estimates$p1; latency<-estimates$p2; precision<-estimates$p3
   }
-  efficacy<-estimates$p1; latency<-estimates$p2; precision<-estimates$p3
-  print(estimates)
+  
   #create guessing distribution
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   #unitise it
