@@ -31,7 +31,7 @@ test_that("Decent estimates", {
   fit<- fitModel(df$SPE, minSPE, maxSPE, pseudoUniform, startingParams)
   fit<- fit$content 
   warns<- fit$warnings
-  print(fit)
+  #print(fit)
   
   #Check that standard fit method gives decent results
   expectedParamEstimates<- c(.84,.48,.99) # c(.37,1.2,.017)  #from L-BFGS-B

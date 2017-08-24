@@ -6,13 +6,13 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,  comment = NA)
 ```
 
 Import data
 
-```{r importData, echo=FALSE}
-rm(list=ls())
+```{r importData, echo=FALSE, message=FALSE}
+#rm(list=ls())
 
 mixModelingPath<- file.path("mixtureModeling")
 
@@ -53,21 +53,24 @@ estimates_MATLAB<-estimates_MATLAB %>% mutate(efficacy=efficacy/100,latency=late
 
 ```
 
-Fit mixture model with R
-```{r, echo=FALSE}
+Fit mixture model with R if not already available.
+```{r, echo=FALSE, message=FALSE}
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 
 condtnVariableNames <- c("subject","stream", "orientation") # 
 
-estimates<- df %>%    #filter(subject=="AA") %>%
-  group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
-  do(analyzeOneCondition(.,numItemsInStream))
-estimates<- estimates %>% rename(efficacy = p1, latency = p2, precision = p3)
+if (!exists("estimates")) {
+  estimates<- df %>%    #filter(subject=="AA") %>%
+    group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
+    do(analyzeOneCondition(.,numItemsInStream))
+  estimates<- estimates %>% rename(efficacy = p1, latency = p2, precision = p3)
+}
 head(estimates)
 ```
 
-Unfortunately the differences between MATLAB and R are slightly substantial
-```{r}
+Unfortunately the differences between MATLAB and R are not trivial. Not substantial either, but we'd prefer trivial.
+
+```{r, echo=FALSE, message=FALSE}
 #Compare MATLAB parameter estimates to R
 estimates_MATLAB<- estimates_MATLAB %>% rename(efficacy_M = efficacy, latency_M = latency, precision_M = precision)
 merged<- merge(estimates,estimates_MATLAB)  
@@ -77,32 +80,58 @@ merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-la
 diffs<- select(merged, ends_with("Diff"))
 ```
 
-The mean discrepancy (mean of the absolute value of the difference of the parameter estimates) is
-```{r}
+The mean discrepancy (mean of the absolute value of the difference of the parameter estimates) for
+efficacy (effDiff), latency (latDiff), and precision (preDiff) is
+```{r, echo=FALSE, message=FALSE}
 #calc discrepancies
 meanDiscrepancy<- summarise_all(abs(diffs),mean)
-meanDiscrepancy
+round(meanDiscrepancy,3)
 ```
 
 The bias difference (mean difference without taking the absolute value) is
-```{r}
+```{r, echo=FALSE, message=FALSE}
 biasDiff<- summarise_all(diffs,mean)
-biasDiff
+round(biasDiff,3)
+```
+Negative numbers above mean that MATLAB gives slightly higher efficacy and trivially higher precision.
+
+Let's inspect histogram plots and fits to look for patterns.
+```{r, echo=FALSE, message=FALSE, fig.height=30}
+#create R curves
+df<- df %>% dplyr::filter(subject <"AC")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
+
+#Add R parameter estimates to dataframe
+df<- merge(df,estimates) 
+
+fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
+  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
+
+#create MATLAB curves
+estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
+dg<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
+fitsMATLAB<- dg %>% group_by(orientation,stream,subject) %>% 
+  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
+
+#Concatenate R and MATLAB into single dataframe
+fitDfs$lang<-"R"; fitsMATLAB$lang<-"MATLAB"
+fits_R_MATLAB <- rbind( data.frame(fitDfs), data.frame(fitsMATLAB) )
+dfBoth<-rbind(   df %>% mutate(lang="R"), df %>% mutate(lang="MATLAB")  )
+
+g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(subject+stream+orientation~lang)
+g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
+g<-g +theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
+g<-g+ theme(line=element_blank(), panel.border = element_blank())
+sz=.8
+g<-g+ geom_point(data=fits_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
+g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
+g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
+numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream,dfBoth$lang))
+fontSz = 80/numGroups
+g<-g +geom_text(data=fits_R_MATLAB,aes(x=-7,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=fits_R_MATLAB,aes(x=-7,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
+  geom_text(data=fits_R_MATLAB,aes(x=-7,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
+show(g)
 ```
 
-Here are all the differences
-```{r}
-round(diffs,3)*100
-```
-
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Next I need to calculate the likelihood of the data according to the R estimates versus MATLAB
