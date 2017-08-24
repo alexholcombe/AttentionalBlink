@@ -9,28 +9,10 @@ importedToRbyChris <- "allParams.RData"
 MATLABmixtureModelOutput<- file.path( MATLABmixtureModelOutputPath, importedToRbyChris )
   
 #Import raw data
-#raw data path containing .mat file for each subject
-directFromMAT <- FALSE #.mat file is in particular format
-if (directFromMAT) {  #Have full code for importing lots of MAT Files in backwardsLtrsLoadRawData.R
-  rawDataPath<- file.path("~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/RawData/Data/")
-  data <- readMat(str_c(rawDataPath, "AA_17-05-01_1.mat"))  #The raw multidimensional matrix format
-  
-  # Work out possible positions in the stream for T1.
-  #Is the values in allTargets the positions of the targets in the stream?
-  # Indeed, looks like allTargets[1,1] is position of one target in first trial, allTargets[1,2] is position of other target
-  targetSP<- data$allTargets[,1] #target1 position each trial
-  possibleTargetSP <- sort(unique(targetSP))
-  numItemsInStream <- length( data$allLetterOrder[1,1,] )
-  #possiblePos <- sort( unique(data$allResponses[,1]) ) #serial position of response1 every trial
-  nTargetPos <- length(targetSP)
-} else {
-  rawDataPath<- file.path("data/")
-  #.mat file been preprocessed into melted long dataframe by backwarsLtrsLoadRawData.R
-  data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) 
-}
-
-#Would be nice to add my helper function to take note of whether counterbalanced
-#https://stackoverflow.com/questions/17185829/check-that-all-combinations-occur-equally-often-for-specified-columns-of-a-dataf/17185830#17185830
+rawDataPath<- file.path("data/")
+#Experiment was administered by MATLAB
+#.mat file been preprocessed into melted long dataframe by backwarsLtrsLoadRawData.R
+data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) 
 
 numItemsInStream<- length( data$letterSeq[1,] )  
 minSPE<- -17; maxSPE<- 17
@@ -41,6 +23,7 @@ df$letterSeq<- NULL
 
 #improve the column names, to match MATLAB column names
 #mutate target to Stream
+library(dplyr)
 names(df)[names(df) == 'target'] <- 'stream'
 df <- df %>% mutate( stream =ifelse(stream==1, "Left","Right") )
 #mutate condition to Orientation
@@ -110,7 +93,7 @@ df<- df %>% dplyr::filter(subject <="AD")  #dplyr::filter(subject <="AP") #dplyr
 fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
         do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
-quartz(title=tit,width=12,height=6) 
+quartz(title="ok",width=12,height=6) 
 g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
 g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
 sz=.3
@@ -149,8 +132,11 @@ g +geom_text(data=fitDfs,aes(x=-8,y=32, label = paste("plain(e)==", round(effica
   geom_text(data=fitDfs,aes(x=-8,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 
 
+quartz(title="MATLAB vs R",width=13,height=6) 
+quartz(title="MATLAB vs R",width=6,height=13) 
+
 #create R curves
-df<- df %>% dplyr::filter(subject <="AD")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+df<- df %>% dplyr::filter(subject <"AC")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
 fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
   do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
@@ -165,17 +151,18 @@ fitDfs$lang<-"R"; fitsMATLAB$lang<-"MATLAB"
 fits_R_MATLAB <- rbind( data.frame(fitDfs), data.frame(fitDfsMATLAB) )
 dfBoth<-rbind(   df %>% mutate(lang="R"), df %>% mutate(lang="MATLAB")  )
 
-g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(lang~subject+stream+orientation)
-g<-g+geom_histogram(binwidth=1,color="gray77") + xlim(minSPE,maxSPE)
+g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(subject+stream+orientation~lang)
+g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
+g<-g +theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
+g<-g+ theme(line=element_blank(), panel.border = element_blank())
 sz=.3
-g<-g+ geom_point(data=fits_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz)
+g<-g+ geom_point(data=fits_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2)
 g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
 g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
-g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
-numGroups<- length(table(df$orientation,df$subject,df$stream,df$lang))
+numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream,dfBoth$lang))
 fontSz = 80/numGroups
-g +geom_text(data=fits_R_MATLAB,aes(x=-8,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
-  geom_text(data=fits_R_MATLAB,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
-  geom_text(data=fits_R_MATLAB,aes(x=-8,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
+g +geom_text(data=fits_R_MATLAB,aes(x=-7,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=fits_R_MATLAB,aes(x=-7,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
+  geom_text(data=fits_R_MATLAB,aes(x=-7,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 
 #TODO: Also should compare different-starting-point fit variability to R/MATLAB variability

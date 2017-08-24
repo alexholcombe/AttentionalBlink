@@ -1,0 +1,107 @@
+---
+title: "compareMATLABtoR"
+author: "Alex Holcombe"
+date: "8/24/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import data
+
+```{r importData, echo=FALSE}
+rm(list=ls())
+
+mixModelingPath<- file.path("mixtureModeling")
+
+#Import MATLAB fits
+MATLABmixtureModelOutputPath<-"~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/MixModData"
+importedToRbyChris <- "allParams.RData"
+MATLABmixtureModelOutput<- file.path( MATLABmixtureModelOutputPath, importedToRbyChris )
+  
+#Import raw data
+rawDataPath<- file.path("data/")
+#Experiment was administered by MATLAB
+#.mat file been preprocessed into melted long dataframe by backwarsLtrsLoadRawData.R
+data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) 
+
+#tidy data
+df<- data
+#It seems that to work with dplyr, can't have array field like letterSeq
+df$letterSeq<- NULL
+
+
+numItemsInStream<- length( data$letterSeq[1,] )  
+minSPE<- -17; maxSPE<- 17
+
+df<-df %>% rename(stream = target, orientation = condition )
+df <- df %>% mutate( stream =ifelse(stream==1, "Left","Right") )
+#mutate condition to Orientation
+df <- df %>% mutate( orientation =ifelse(orientation==1, "Canonical","Inverted") )
+
+#Load in MATLAB parameter estimates from Chris Bush run of MATLAB
+load(MATLABmixtureModelOutput, verbose=FALSE)
+#join into single long dataframe
+estimates_MATLAB<- merge(efficacy.long,latency.long)
+estimates_MATLAB<- merge(estimates_MATLAB,precision.long)
+estimates_MATLAB<- data.frame(estimates_MATLAB)
+names(estimates_MATLAB) <- tolower(names(estimates_MATLAB)) #lower case the column names
+estimates_MATLAB<-estimates_MATLAB %>% mutate(efficacy=efficacy/100,latency=latency/100,precision=precision/100)
+
+```
+
+Fit mixture model with R
+```{r}
+source( file.path(mixModelingPath,"analyzeOneCondition.R") )
+
+condtnVariableNames <- c("subject","stream", "orientation") # 
+
+estimates<- df %>%    #filter(subject=="AA") %>%
+  group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
+  do(analyzeOneCondition(.,numItemsInStream))
+estimates<- estimates %>% rename(efficacy = p1, latency = p2, precision = p3)
+head(estimates)
+```
+
+Unfortunately the differences between MATLAB and R are slightly substantial
+```{r}
+#Compare MATLAB parameter estimates to R
+estimates_MATLAB<- estimates_MATLAB %>% rename(efficacy_M = efficacy, latency_M = latency, precision_M = precision)
+merged<- merge(estimates,estimates_MATLAB)  
+merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision )
+
+#show differences columns only
+diffs<- select(merged, ends_with("Diff"))
+```
+
+The mean discrepancy (mean of the absolute value of the difference of the parameter estimates) is
+```{r}
+#calc discrepancies
+meanDiscrepancy<- summarise_all(abs(diffs),mean)
+meanDiscrepancy
+```
+
+The bias difference (mean difference without taking the absolute value) is
+```{r}
+biasDiff<- summarise_all(diffs,mean)
+biasDiff
+```
+
+Here are all the differences
+```{r}
+round(diffs,3)*100
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
