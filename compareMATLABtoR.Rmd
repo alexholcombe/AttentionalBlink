@@ -28,6 +28,7 @@ rawDataPath<- file.path("data/")
 data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) 
 
 #tidy data
+library(dplyr)
 df<- data
 #It seems that to work with dplyr, can't have array field like letterSeq
 df$letterSeq<- NULL
@@ -53,7 +54,7 @@ estimates_MATLAB<-estimates_MATLAB %>% mutate(efficacy=efficacy/100,latency=late
 ```
 
 Fit mixture model with R
-```{r}
+```{r, echo=FALSE}
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 
 condtnVariableNames <- c("subject","stream", "orientation") # 

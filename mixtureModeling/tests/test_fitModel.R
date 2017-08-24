@@ -1,5 +1,6 @@
 # test of fitModel intended to be used with the testthat package
 
+require(testthat)
 #To testthat, run test_file("mixtureModeling/tests/test_fitModel.r")
 #Compensate for path getting set to mixtureModeling/tests/
 print(getwd())
@@ -12,9 +13,9 @@ source(file.path(pathNeeded,"fitModel.R"))
 
 test_that("Decent estimates", {
   
-  df<-readRDS(file="exampleSubject.Rdata")
+  df<-readRDS( file.path(pathNeeded,"tests","exampleSubject.Rdata") )
   library(dplyr)
-  df<- filter(df, condition==1 & target==1)
+  df<- dplyr::filter(df, condition==1 & target==1)
   
   startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
 
