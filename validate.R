@@ -129,11 +129,11 @@ g +geom_text(data=fitDfs,aes(x=-8,y=32, label = paste("plain(e)==", round(effica
 #swap estimate for MATLAB
 estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
 dg<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
-fitDfs<- dg %>% group_by(orientation,stream,subject) %>% 
+fitDfsM<- dg %>% group_by(orientation,stream,subject) %>% 
   do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 
-quartz(title="MATLAB",width=12,height=6) 
+quartz(title="MATLAB",width=13,height=6) 
 g=ggplot(df, aes(x=SPE)) + facet_grid(orientation~subject+stream)
 g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
 sz=.3
@@ -148,5 +148,34 @@ g +geom_text(data=fitDfs,aes(x=-8,y=32, label = paste("plain(e)==", round(effica
   geom_text(data=fitDfs,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
   geom_text(data=fitDfs,aes(x=-8,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 
+
+#create R curves
+df<- df %>% dplyr::filter(subject <="AD")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
+  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
+
+#create MATLAB curves
+estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
+dg<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
+fitsMATLAB<- dg %>% group_by(orientation,stream,subject) %>% 
+  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
+
+#Concatenate R and MATLAB into single dataframe
+fitDfs$lang<-"R"; fitsMATLAB$lang<-"MATLAB"
+fits_R_MATLAB <- rbind( data.frame(fitDfs), data.frame(fitDfsMATLAB) )
+dfBoth<-rbind(   df %>% mutate(lang="R"), df %>% mutate(lang="MATLAB")  )
+
+g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(lang~subject+stream+orientation)
+g<-g+geom_histogram(binwidth=1,color="gray77") + xlim(minSPE,maxSPE)
+sz=.3
+g<-g+ geom_point(data=fits_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz)
+g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
+g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
+g<-g + theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
+numGroups<- length(table(df$orientation,df$subject,df$stream,df$lang))
+fontSz = 80/numGroups
+g +geom_text(data=fits_R_MATLAB,aes(x=-8,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=fits_R_MATLAB,aes(x=-8,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
+  geom_text(data=fits_R_MATLAB,aes(x=-8,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 
 #TODO: Also should compare different-starting-point fit variability to R/MATLAB variability
