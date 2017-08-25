@@ -50,18 +50,34 @@ estimates_MATLAB<- merge(efficacy.long,latency.long)
 estimates_MATLAB<- merge(estimates_MATLAB,precision.long)
 estimates_MATLAB<- data.frame(estimates_MATLAB)
 names(estimates_MATLAB) <- tolower(names(estimates_MATLAB)) #lower case the column names
-estimates_MATLAB<-estimates_MATLAB %>% mutate(efficacy=efficacy/100,latency=latency/100,precision=precision/100)
+estimates_MATLAB<-estimates_MATLAB %>%
+              mutate(efficacy=efficacy/100,latency=latency/100,precision=precision/100)
+
 
 ```
 
-```{r, echo=FALSE}
+```{r calcLikelihoodForMATLABparams, echo=FALSE}
+  #Want to add likelihood for MATLAB estimates to dataframe. Then can plot it with ggplot
+  dfM<-merge( df, estimates_MATLAB )
+  #dfM<- dfM %>% 
+   #       rename(efficacy = efficacy_M, latency= latency_M, precision = precision_M)
+  condtnVariableNames <- c("subject","stream", "orientation") # 
+
   #Unfortunately need the actual data for exact calculation of likelihood,
   # because guessing distribution depends on targetSP for that particular condition
   #Calculate the likelihood of the data given the MATLAB estimates
-  likelihood <- pdf_Mixture_Single(SPEs, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
-  #calculate the guessing distribution, empirically (based on actual targetSP)
-  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
+  source( file.path(mixModelingPath,"likelihoodOneConditionGivenParams.R") ) #for calcFitDataframes
 
+  dfMl<- dfM %>%    # dplyr::filter(subject=="AA") %>%
+    group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you use variable
+    #do ( print(.) )
+    do( likelihoodOneConditionForDplyr(.,numItemsInStream)   )
+  #Calculated the likelihood for each condition.
+  #Merge back with original dataframes.
+  dfMl<- merge(dfM,dfMl)
+  #Now need to reduce down, eliminating SPE so only one row per condition
+  estimates_MATLAB <- unique( dfMl %>% select(stream,orientation,subject,efficacy,latency,precision,lik) )
+  #estimates_MATLAB<- merge(estimates_MATLAB, likEachCondtn)
 
 ```
 
@@ -69,24 +85,22 @@ Fit mixture model with R if not already available.
 ```{r, echo=FALSE, message=FALSE}
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 
-condtnVariableNames <- c("subject","stream", "orientation") # 
-
 if (!exists("estimates")) {
   estimates<- df %>%    #filter(subject=="AA") %>%
     group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
-    do(analyzeOneCondition(.,numItemsInStream))
+    do(analyzeOneCondition(.,numItemsInStream,parameterBounds()))
   estimates<- estimates %>% rename(efficacy = p1, latency = p2, precision = p3)
 }
 head(estimates)
 ```
 
-Unfortunately the differences between MATLAB and R are not trivial. Not substantial either, but we'd prefer trivial.
+Unfortunately the differences between MATLAB and R are not trivial. Not substantial either! but we'd prefer trivial.
 
 ```{r, echo=FALSE, message=FALSE}
 #Compare MATLAB parameter estimates to R
 estimates_MATLAB<- estimates_MATLAB %>% rename(efficacy_M = efficacy, latency_M = latency, precision_M = precision)
 merged<- merge(estimates,estimates_MATLAB)  
-merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision )
+merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision, negLogL_Diff = val - lik )
 
 #show differences columns only
 diffs<- select(merged, ends_with("Diff"))
@@ -96,7 +110,9 @@ The mean discrepancy (mean of the absolute value of the difference of the parame
 efficacy (effDiff), latency (latDiff), and precision (preDiff) is
 ```{r, echo=FALSE, message=FALSE}
 #calc discrepancies
-meanDiscrepancy<- summarise_all(abs(diffs),mean)
+#Don't include negLogL because absolute value not interpretable
+meanDiscrepancy<- diffs %>% select(-negLogL_Diff) 
+meanDiscrepancy<- summarise_all(abs(meanDiscrepancy),mean)
 round(meanDiscrepancy,3)
 ```
 
@@ -106,6 +122,7 @@ biasDiff<- summarise_all(diffs,mean)
 round(biasDiff,3)
 ```
 Negative numbers above mean that MATLAB gives slightly higher efficacy and trivially higher precision.
+For likelihood, smaller neg log likelihood is better.
 
 Let's inspect histogram plots and fits to look for patterns.
 ```{r, echo=FALSE, message=FALSE, fig.height=30}

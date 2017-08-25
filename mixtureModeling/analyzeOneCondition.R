@@ -56,5 +56,5 @@ analyzeOneCondition<- function(df, numItemsInStream, paramBounds) {
   return( bestEstimate )
 }
 
-likelihoodOneCondition<- function(df, numItemsInStream) {
-}
+
+
