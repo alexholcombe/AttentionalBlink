@@ -1,3 +1,14 @@
+
+#Compensate for path getting set to mixtureModeling/tests/ by testthat
+if (basename(getwd()) != "tests") { #directory of this file, which should be mixtureModeling/
+  pathNeeded<- "mixtureModeling" 
+} else { 
+  pathNeeded <- ".." 
+}
+
+source( file.path(pathNeeded,"createGuessingDistribution.R")  )
+source( file.path(pathNeeded,"pdf_Mixture_Single.R") ) 
+
 likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {
   #Note that the likelihood depends on the number of observations. So it'd be unfair to compare the 
   # fit across different datasets. Could divide by the number of observations to calculate
@@ -20,12 +31,6 @@ likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {
   return(-sum(log(likelihoodEachObservation + 1e-8)))
 }
 
-l<- likelihoodOneConditionGivenParams(dfM, 24, params)
-
-dfMl<- dfM %>%    dplyr::filter(subject=="AA") %>%
-  #group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you use variable
-  #do ( print(.) )
-  do( likelihoodOneConditionForDplyr(.,numItemsInStream)   )
 
 likelihoodOneConditionForDplyr<- function(df,numItemsInStream) {
   params<- df[1,c("efficacy","latency","precision")]

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE,  comment = NA)
 Import data
 
 ```{r importData, echo=FALSE}
-#rm(list=ls())
+rm(list=ls())
 
 mixModelingPath<- file.path("mixtureModeling")
 
@@ -98,9 +98,9 @@ Unfortunately the differences between MATLAB and R are not trivial. Not substant
 
 ```{r, echo=FALSE, message=FALSE}
 #Compare MATLAB parameter estimates to R
-estimates_MATLAB<- estimates_MATLAB %>% rename(efficacy_M = efficacy, latency_M = latency, precision_M = precision)
+estimates_MATLAB<- estimates_MATLAB %>% rename(efficacy_M = efficacy, latency_M = latency, precision_M = precision, val_M = val)
 merged<- merge(estimates,estimates_MATLAB)  
-merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision, negLogL_Diff = val - lik ) #LIK change
+merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision, negLogL_Diff = val - val_M ) 
 
 #show differences columns only
 diffs<- select(merged, ends_with("Diff"))
@@ -140,8 +140,8 @@ fitDfs<- df %>% group_by(orientation,stream,subject) %>%
 #create MATLAB curves
 estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
 #create temporary dataframe with data plus MATLAB estimates to generate curves
-dg<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
-fitsMATLAB<- dg %>% group_by(orientation,stream,subject) %>% 
+dM<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
+fitsMATLAB<- dM %>% group_by(orientation,stream,subject) %>% 
             do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 #Concatenate R and MATLAB into single dataframe

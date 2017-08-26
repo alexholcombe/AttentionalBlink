@@ -25,3 +25,5 @@ test_that("Basic test", {
   expect_that( l, equals(319.4832, tolerance  = 0.01) )
   }
 )
+
+
