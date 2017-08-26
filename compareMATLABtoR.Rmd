@@ -76,7 +76,7 @@ estimates_MATLAB<-estimates_MATLAB %>%
   #Merge back with original dataframes.
   dfMl<- merge(dfM,dfMl)
   #Now need to reduce down, eliminating SPE so only one row per condition
-  estimates_MATLAB <- unique( dfMl %>% select(stream,orientation,subject,efficacy,latency,precision,lik) )
+  estimates_MATLAB <- unique( dfMl %>% select(stream,orientation,subject,efficacy,latency,precision,val) )
   #estimates_MATLAB<- merge(estimates_MATLAB, likEachCondtn)
 
 ```
@@ -100,7 +100,7 @@ Unfortunately the differences between MATLAB and R are not trivial. Not substant
 #Compare MATLAB parameter estimates to R
 estimates_MATLAB<- estimates_MATLAB %>% rename(efficacy_M = efficacy, latency_M = latency, precision_M = precision)
 merged<- merge(estimates,estimates_MATLAB)  
-merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision, negLogL_Diff = val - lik )
+merged<- merged %>% mutate( effDiff = efficacy-efficacy_M, latDiff= latency_M-latency, preDiff= precision_M-precision, negLogL_Diff = val - lik ) #LIK change
 
 #show differences columns only
 diffs<- select(merged, ends_with("Diff"))
@@ -129,6 +129,7 @@ Let's inspect histogram plots and fits to look for patterns.
 #create R curves
 df<- df %>% dplyr::filter(subject <"AC")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
 source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
+# NEED TO CHANGE EVERYBODY TO VAL INSTEAD OF LIK
 
 #Add R parameter estimates to dataframe
 df<- merge(df,estimates) 
@@ -138,9 +139,10 @@ fitDfs<- df %>% group_by(orientation,stream,subject) %>%
 
 #create MATLAB curves
 estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
+#create temporary dataframe with data plus MATLAB estimates to generate curves
 dg<-merge( select(df,-efficacy,-latency,-precision), estimates_M )
 fitsMATLAB<- dg %>% group_by(orientation,stream,subject) %>% 
-  do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
+            do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 #Concatenate R and MATLAB into single dataframe
 fitDfs$lang<-"R"; fitsMATLAB$lang<-"MATLAB"
@@ -157,9 +159,10 @@ g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=s
 g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream,dfBoth$lang))
 fontSz = 80/numGroups
-g<-g +geom_text(data=fits_R_MATLAB,aes(x=-7,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+g<-g + geom_text(data=fits_R_MATLAB,aes(x=-7,y=32, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=fits_R_MATLAB,aes(x=-7,y=27, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
-  geom_text(data=fits_R_MATLAB,aes(x=-7,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
+  geom_text(data=fits_R_MATLAB,aes(x=-7,y=23, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=fits_R_MATLAB,aes(x=-7,y=27, label = paste("l==", round(val,1), sep = "")),  parse = TRUE,size=fontSz)
 show(g)
 ```
 

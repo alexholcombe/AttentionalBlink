@@ -63,12 +63,16 @@ fitAndPlotHist<- function(df,minSPE,maxSPE,numItemsInStream) {
 calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
   #Calculate dataframes containing the fitted curve, so can plot data and curves at same time
   #User can optionally supply estimates, otherwise need to do the fitting
-  if ( "efficacy" %in% names(df) ) { #user supplied efficacy
+  if ( "efficacy" %in% names(df) ) { #user supplied efficacy, latency, precision
     efficacy<- df$efficacy[1]
     latency<- df$latency[1]; precision<- df$precision[1]
+    if ( "val" %in% names(df) ) { #likelihood, preserve
+      val <- df$val[1]
+    }
   } else {
     estimates<- analyzeOneCondition(df,numItemsInStream)
     efficacy<-estimates$p1; latency<-estimates$p2; precision<-estimates$p3
+    val<- estimates$val
   }
   
   #create guessing distribution
@@ -79,8 +83,7 @@ calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
   guessingThis<- (1-efficacy) * pseudoUniform * length(df$SPE)
   fitDFs<-data.frame(x=minSPE:maxSPE, 
                      guessingFreq=guessingThis,
-                     efficacy=efficacy, latency=latency, precision=precision) 
-  
+                     efficacy=efficacy, latency=latency, precision=precision, val=val) 
   #Calculate Gaussian and sum
   #Need the quantized Gaussian
   grain<-1
