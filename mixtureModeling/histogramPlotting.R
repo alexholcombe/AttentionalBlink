@@ -28,7 +28,6 @@ plotHistWithFit<- function(SPE,minSPE,maxSPE,targetSP,numItemsInStream,efficacy,
 
   #plot Gaussian and guessing distribution
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,targetSP,numItemsInStream)
-  print(pseudoUniform)
   #unitise it
   pseudoUniform<-pseudoUniform/sum(pseudoUniform)
   #calculate points at appropriate height for this data
@@ -55,9 +54,9 @@ plotHistWithFit<- function(SPE,minSPE,maxSPE,targetSP,numItemsInStream,efficacy,
 
 fitAndPlotHist<- function(df,minSPE,maxSPE,numItemsInStream) {
   
-  estimates<- analyzeOneCondition(df,numItemsInStream)
-  plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
-  return(estimates)
+  estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
+  g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
+  return( list(estimates=estimates, plot=g) )
 }
 
 #Use for for ggplot so can split and 
