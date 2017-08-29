@@ -1,5 +1,5 @@
 ---
-title: "compare MATLAB to R"
+title: "R is better than MATLAB"
 author: "Alex Holcombe"
 date: "8/24/2017"
 output: html_document
