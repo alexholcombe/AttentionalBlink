@@ -6,6 +6,8 @@ if (basename(getwd()) != "tests") {
   pathNeeded <- ".." 
 }
 
+source( file.path(pathNeeded,"likelihoodOneConditionGivenParams.R")  )
+
 #Test
 test_that("Basic test", {
   
@@ -13,13 +15,11 @@ test_that("Basic test", {
   #data<- readRDS( file.path("mixtureModeling/tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
   library(dplyr)
   numItemsInStream<- length( data$letterSeq[1,] )  
-  data<- data
   #It seems that to work with dplyr, can't have array field like letterSeq
   data$letterSeq<- NULL
   BA22 <- data %>% dplyr::filter(subject=="BA" & target==2 & condition==2)
   
   params<- data.frame( p1=0.2796651, p2=.06975089, p3=.8007981 )
-
   l<- likelihoodOneConditionGivenParams(BA22, 24, params)
   
   expect_that( l, equals(319.4832, tolerance  = 0.01) )

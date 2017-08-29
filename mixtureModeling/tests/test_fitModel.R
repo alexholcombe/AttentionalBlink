@@ -10,7 +10,8 @@ if (basename(getwd()) != "tests") {
   pathNeeded <- ".." 
 }
 source(file.path(pathNeeded,"fitModel.R"))
-
+source(file.path(pathNeeded,"parameterBounds.R"))
+source(file.path(pathNeeded,"parametersGuess.R"))
 
 
 test_that("Decent estimates", {
@@ -18,19 +19,19 @@ test_that("Decent estimates", {
   df<-readRDS( file.path(pathNeeded,"tests","exampleSubject.Rdata") )
   library(dplyr)
   df<- dplyr::filter(df, condition==1 & target==1)
+  numItemsInStream<-24
   
-  startingParams<- parametersGuess( parametersLowerBound, parametersUpperBound )
+  startingParams<- parametersGuess( parameterBounds()$lower, parameterBounds()$upper )
 
   possibleTargetSP<- sort(unique(df$targetSP))
   minTargetSP <- min(possibleTargetSP)
   maxTargetSP <- max(possibleTargetSP)
   minSPE <- 1 - maxTargetSP
   maxSPE <- numItemsInStream - minTargetSP
-  numItemsInStream<-24
   #calculate the guessing distribution, empirically (based on actual targetSP)
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   
-  fit<- fitModel(df$SPE, minSPE, maxSPE, pseudoUniform, startingParams)
+  fit<- fitModel(df$SPE, minSPE, maxSPE, pseudoUniform, startingParams, parameterBounds() )
   fit<- fit$content 
   warns<- fit$warnings
   #print(fit)

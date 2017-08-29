@@ -16,7 +16,8 @@ if (basename(getwd()) != "tests") {
   pathNeeded <- ".." 
 }
 source( file.path(pathNeeded, "createGuessingDistribution.R") )
-                  
+source( file.path(pathNeeded, "parameterBounds.R") )
+
 plotHistWithFit<- function(SPE,minSPE,maxSPE,targetSP,numItemsInStream,efficacy,latency,precision) {
   #targetSP is needed to construct empirical guessing distribution
   
@@ -70,7 +71,7 @@ calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
       val <- df$val[1]
     }
   } else {
-    estimates<- analyzeOneCondition(df,numItemsInStream)
+    estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
     efficacy<-estimates$p1; latency<-estimates$p2; precision<-estimates$p3
     val<- estimates$val
   }

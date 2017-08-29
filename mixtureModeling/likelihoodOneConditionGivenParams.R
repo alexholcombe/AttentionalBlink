@@ -20,7 +20,6 @@ likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {
   maxSPE <- numItemsInStream - minTargetSP
   #calculate the guessing distribution, empirically (based on actual targetSP)
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
-  
   p<- params[[1]]
   mu<- params[[2]]
   sigma<- params[[3]]
@@ -31,7 +30,7 @@ likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {
   return(-sum(log(likelihoodEachObservation + 1e-8)))
 }
 
-
+################
 likelihoodOneConditionForDplyr<- function(df,numItemsInStream) {
   params<- df[1,c("efficacy","latency","precision")]
   l<- likelihoodOneConditionGivenParams(df, numItemsInStream, params)

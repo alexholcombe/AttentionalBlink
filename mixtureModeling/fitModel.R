@@ -23,7 +23,7 @@ withWarnings <- function(expr) {
 #likelihood <- pdf_Mixture_Single(SPEs, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
 
 
-fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
+fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess, paramBounds)
 {
   #Create function that calculates log likelihood of data given particular parameter values,
   #to pass to optim
@@ -50,7 +50,7 @@ fitModel <- function(SPEs, minSPE, maxSPE, pseudoUniform, parameterGuess)
   fit <- withWarnings(
                 optimx(parameterGuess, fn= pdf_normmixture_ready_for_optim,
                   method=c('L-BFGS-B'),
-                  lower=parametersLowerBound, upper=parametersUpperBound,
+                  lower=paramBounds$lower, upper=paramBounds$upper,
                   control=ctrl)
            )
   return(fit)                    

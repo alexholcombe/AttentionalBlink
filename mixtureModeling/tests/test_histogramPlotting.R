@@ -17,6 +17,7 @@ data$letterSeq<- NULL
 
 source(file.path(pathNeeded,"histogramPlotting.R"))
 source(file.path(pathNeeded,"analyzeOneCondition.R"))
+source(file.path(pathNeeded,"parameterBounds.R"))
 
 #plot histogram
 require(ggplot2)
@@ -30,7 +31,7 @@ names(data)[names(data) == 'condition'] <- 'orientation'
 data <- data %>% mutate( orientation =ifelse(orientation==1, "Canonical","Inverted") )
 
 #Test on one subject
-df<-data %>% filter(subject=="BE")
+df<-data %>% dplyr::filter(subject=="BE")
 
 fitDfs<- calcFitDataframes(df,minSPE,maxSPE,numItemsInStream)
 g=ggplot(df, aes(x=SPE)) 
@@ -46,20 +47,20 @@ g
 #Check troublesome cases.
 
 # BE,2,1
-df<- data %>% filter(subject=="BE" & stream=="right" & orientation=="Canonical") 
+df<- data %>% dplyr::filter(subject=="BE" & stream=="right" & orientation=="Canonical") 
 estimates<- analyzeOneCondition(df,numItemsInStream)
 g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
 show(g) #Looks like efficacy wrong. Problem is that can fit the histogram very well with a tiny precision.
 #This looks like a general problem that will often cause precision to be underestimated.
 
 #BA right Inverted
-df <- data %>% filter(subject=="BA" & stream=="right" & orientation=="Inverted")
+df <- data %>% dplyr::filter(subject=="BA" & stream=="right" & orientation=="Inverted")
 estimates<- analyzeOneCondition(df,numItemsInStream)
 g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
 show(g) #Looks fine
 
 #BO,1,1
-df<- data %>% filter(subject=="BO" & stream=="left" & orientation=="Canonical") 
+df<- data %>% dplyr::filter(subject=="BO" & stream=="left" & orientation=="Canonical") 
 estimates<- analyzeOneCondition(df,numItemsInStream)
 g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
 show(g) #How did BO do it? Never guessed, almost, only twice
@@ -72,7 +73,7 @@ fitAndPlotHist(df,minSPE,maxSPE,numItemsInStream)
 
 
 
-estimates %>% filter(round(p1,3)==0.280) #BA,2,2 or BE,2,1
+estimates %>% dplyr::filter(round(p1,3)==0.280) #BA,2,2 or BE,2,1
 #1e-05  4 1e-05 334.385593546 but didn't end up being the winning replicate
 #Inspect AD,2,1 and AI,1,2 because very poor fit
 

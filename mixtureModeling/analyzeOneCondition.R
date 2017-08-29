@@ -33,7 +33,7 @@ analyzeOneCondition<- function(df, numItemsInStream, paramBounds) {
   fitModelDF <- function( SPE, minSPE, maxSPE ) {
     #Calculate parameter guess
     startingParams<- parametersGuess( paramBounds$lower, paramBounds$upper )
-    fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams)
+    fit<- fitModel(SPE, minSPE, maxSPE, pseudoUniform, startingParams, paramBounds)
     fit<- fit$content
     warns<- fit$warnings
     #print(fit)

@@ -12,7 +12,7 @@ createGuessingDistribution<- function(minSPE,maxSPE,targetSP,numItemsInStream) {
   for (i in 1:length( targetSP )) {  
     #for (i in 1:length(possibleT1Pos)){ #theoretical  (assumes each possible position occurred equally often)
     
-    thisPos <- data$targetSP[i]   #For example, the first position number might be the 7th position in the stream.
+    thisPos <- targetSP[i]   #For example, the first position number might be the 7th position in the stream.
     
     # Add to the pseudo-uniform distribution one unit for every
     # possible error given that T1 position.
