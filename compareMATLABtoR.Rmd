@@ -130,26 +130,30 @@ Let's inspect histogram plots and fits. Note that in every case, the negative lo
 ```{r, echo=FALSE, message=FALSE, fig.height=30}
 #create R curves
 df<- df %>% dplyr::filter(subject <"AC")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+#df<- df %>% dplyr::filter(subject=="AA",stream=="Right", orientation=="Canonical")
 source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
+source( file.path(mixModelingPath,"theme_apa.R") ) #for calcFitDataframes
 # NEED TO CHANGE EVERYBODY TO VAL INSTEAD OF LIK
 
 #Add R parameter estimates to dataframe
 df<- merge(df,estimates) 
 
-fitDfs<- df %>% group_by(orientation,stream,subject) %>% 
+curvesR<- df %>% group_by(orientation,stream,subject) %>% 
   do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 #create MATLAB curves
 estimates_M<- estimates_MATLAB %>% rename(efficacy=efficacy_M,latency=latency_M,precision=precision_M)
 #create temporary dataframe with data plus MATLAB estimates to generate curves
-dM<-merge( select(df,-efficacy,-latency,-precision, -val), estimates_M )
+dataStrippedOfEstimates<- select(df,-efficacy,-latency,-precision, -val)
+dM<-merge( dataStrippedOfEstimates, estimates_M )
 dM<- dM %>% rename( val = val_M ) #has to be called val so calcFitDataframes uses it rather than using R to calculate its own
-fitsMATLAB<- dM %>% group_by(orientation,stream,subject) %>% 
+curvesMATLAB<- dM %>% group_by(orientation,stream,subject) %>% 
             do(calcFitDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 #Concatenate R and MATLAB into single dataframe
-fitDfs$lang<-"R"; fitsMATLAB$lang<-"MATLAB"
-fits_R_MATLAB <- rbind( data.frame(fitDfs), data.frame(fitsMATLAB) )
+curvesR$lang<-"R"; curvesMATLAB$lang<-"MATLAB"
+curves_R_MATLAB <- rbind( data.frame(curvesR), data.frame(curvesMATLAB) )
+#make duplicate of data, one for R column, one for MATLAB (data identical)
 dfBoth<-rbind(   df %>% mutate(lang="R"), df %>% mutate(lang="MATLAB")  )
 
 g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(subject+stream+orientation~lang)
@@ -157,15 +161,16 @@ g<-g+geom_histogram(binwidth=1,color="grey90",border=NA) + xlim(minSPE,maxSPE)
 g<-g +theme_bw() +theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
 g<-g+ theme(line=element_blank(), panel.border = element_blank())
 sz=.8
-g<-g+ geom_point(data=fits_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
-g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
-g<-g+ geom_line(data=fits_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
+#I need to plot the underlying Gaussian, not the discretized Gaussian
+g<-g+ geom_point(data=curves_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
+g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
+g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream,dfBoth$lang))
 fontSz = 80/numGroups
-g<-g + geom_text(data=fits_R_MATLAB,aes(x=-9,y=32, label = paste("-LogLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) + 
-  geom_text(data=fits_R_MATLAB,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
-  geom_text(data=fits_R_MATLAB,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
-  geom_text(data=fits_R_MATLAB,aes(x=-7,y=22, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz) 
+g<-g + geom_text(data=curves_R_MATLAB,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=curves_R_MATLAB,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
+  geom_text(data=curves_R_MATLAB,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
+  geom_text(data=curves_R_MATLAB,aes(x=-7,y=22, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
 show(g)
 ```
 

@@ -1,14 +1,5 @@
 library(ggplot2)
 
-gaussianScaledForData<- function(efficacy,latency,precision,SPE,minSPE,maxSPE,grain) {
-  domain<-seq(minSPE,maxSPE,grain)
-  gaussianThis<- dnorm(domain,latency,precision)
-  #Calculate points at appropriate height fot this data
-  gaussianThis<- gaussianThis * efficacy * length(SPE)
-  gaussianThis<-data.frame(x=domain, SPE=gaussianThis)
-  return(gaussianThis)
-}
-
 #Need to adjust path because Testthat might not work because path gets set to mixtureModeling/tests/
 if (basename(getwd()) != "tests") {
   pathNeeded<- "mixtureModeling"
@@ -87,7 +78,11 @@ calcFitDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
   #Calculate Gaussian and sum
   #Need the quantized Gaussian
   grain<-1
+  #print(paste0("efficacy=",efficacy,"latency=",latency,"precision=",precision))
+  #print(paste0("minSPE=",minSPE,"maxSPE=",maxSPE))
+  #print(paste0("df$SPE=",df$SPE))
   gaussianThis<- gaussianScaledForData(efficacy,latency,precision,df$SPE,minSPE,maxSPE,grain) 
+  #print(gaussianThis)
   fitDFs$gaussianFreq<- gaussianThis$SPE
   
   fitDFs$combinedFitFreq<- fitDFs$gaussianFreq + fitDFs$guessingFreq

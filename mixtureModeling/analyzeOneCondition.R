@@ -12,7 +12,6 @@ source( file.path(pathNeeded,"fitModel.R") )
 
 source( file.path(pathNeeded,"parametersGuess.R") )
 
-
 analyzeOneCondition<- function(df, numItemsInStream, paramBounds) {
   # Calculate the domain of possible serial position errors.
   possibleTargetSP<- sort(unique(df$targetSP))
