@@ -14,36 +14,47 @@ areaOfGaussianBin<- function(binStart,binWidth,latency,precision) {
   return (area)
 }
   
-gaussianScaledForData<- function(efficacy,latency,precision,SPE,minSPE,maxSPE,grain) {
-  
-  domain<-seq(minSPE,maxSPE,grain)
+gaussianScaledForData<- function(efficacy,latency,precision,numObservations,minSPE,maxSPE,grain) {
+  #At each minSPE:grain:maxSPE value, calculate Gaussian at 
+  #  height appropriate for plotting with the histogram of the SPE data  
 
-  #Calculate the likelihood of each data point (each SPE observed)
-  #The data is discrete SPEs, but the model is a continuous Gaussian.
-  #The probability of an individual SPE 
-  
   #Calculate area under the unit Gaussian curve for each bin
-  binsStarts<-data.frame(SPE= seq(minSPE,maxSPE-grain,grain) )
-  binAreasGaussian<- lapply(SPE,areaOfGaussianBin,grain,latency,precision)
   
-  area <- pnorm(binEnd,latency,precision) - pnorm(binStart,latency,precision)
+  #Calculate beginning x value of each bin, e.g. -0.5 for 0 if grain =1
+  binStarts= seq(minSPE-grain/2, maxSPE-grain/2, grain)
+  #Calculate area under the unit Gaussian for each bin. This corresponds
+  #Send each SPE individually to the areaOfGaussianBin function with additional parameters
+  binAreasGaussian<- sapply(binStarts, areaOfGaussianBin,   grain,latency,precision)
   
-  gaussianThis<- dnorm(domain,latency,precision)
-  #Calculate points at appropriate height for this data
-  #print(paste0("lengthSPE=",length(SPE)))
-  gaussianThis<- gaussianThis * efficacy * length(SPE)
-  gaussianThis<-data.frame(x=domain, gaussianFreq=gaussianThis)
+  #Now we have the probability of each bin, but they don't sum to 1 because it wasn't at truncated Gaussian
+  #We can now accomplish truncation of the Gaussian by summing the area of all the bins and dividing
+  #that into each bin, to normalize it so that the total of all the bins =1.
+  probEachBin<- binAreasGaussian / sum(binAreasGaussian)
+  #An alternative, arguably better way to do it would be to assume that anything in the Gaussian tails
+  # beyond the  bins on either end ends up in those end bins.
+  
+  #Now there's the matter of the actual dataset.
+  #The area under the histogram does not sum to 1, it instead sums to the number of trials.
+  #So we need to achieve the same thing for our theoretical Gaussian curve, except that
+  #our Gaussian curve is responsibe for only efficacy proportion of the trials.
+  gaussianThis<- probEachBin * numObservations * efficacy 
+  
+  #Slide it into a dataframe with the bins indicated
+  gaussianThis<-data.frame(x=seq(minSPE,maxSPE,1), gaussianFreq=gaussianThis)
+  
   return(gaussianThis)
 }
 
 
 #Below is mistaken old way that used plain density without integrating the area of each bin
-gaussianScaledForDataOld<- function(efficacy,latency,precision,SPE,minSPE,maxSPE,grain) {
+gaussianScaledForDataOld<- function(efficacy,latency,precision,numObservations,minSPE,maxSPE,grain) {
+  #Return the correct heights of the Gaussian at each minSPE:grain:maxSPE at
+  # the right height for plotting with the histogram of the SPE data
   domain<-seq(minSPE,maxSPE,grain)
   gaussianThis<- dnorm(domain,latency,precision)
   #Calculate points at appropriate height for this data
   #print(paste0("lengthSPE=",length(SPE)))
-  gaussianThis<- gaussianThis * efficacy * length(SPE)
+  gaussianThis<- gaussianThis * efficacy * numObservations
   gaussianThis<-data.frame(x=domain, gaussianFreq=gaussianThis)
   return(gaussianThis)
 }

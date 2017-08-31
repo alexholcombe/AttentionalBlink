@@ -23,7 +23,7 @@ likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {
   p<- params[[1]]
   mu<- params[[2]]
   sigma<- params[[3]]
-  likelihoodEachObservation <- pdf_Mixture_Single(df$SPE, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
+  likelihoodEachObservation <- likelihood_mixture(df$SPE, p, mu, sigma, minSPE,maxSPE, pseudoUniform)
   # Sometimes pdf_normmixture_single returns 0. And the log of 0 is -Inf. So we add
   # 1e-8 to make the value we return finite. This allows optim() to successfully
   # optimise the function.
