@@ -36,7 +36,7 @@ areaUnderGaussianBinTapered<- function(binStart,binWidth,latency,precision,guess
   
   area<- areaUnderGaussianBin(binStart,binWidth,latency,precision)
   
-  binCenter <- round(binStart+bindWidth/2)
+  binCenter <- round(binStart+binWidth/2)
   #Which bin index is this? So can look up in guessingDistribution
   binIndex<- binCenter - minSPE + 1
   
@@ -51,7 +51,7 @@ areaUnderTruncatedGaussianTapered<- function(latency,precision,guessingDistribut
   #Calculate total area of the truncated and tapered Gaussian
   binStarts= seq(minSPE-1/2, maxSPE-1/2, 1)
   #Send each bin individually to the areaOfGaussianBin function with additional parameters
-  binAreasGaussian<-sapply(binStarts, areaUnderGaussianBinTapered, 1,latency,precision,guessingDistribution)
+  binAreasGaussian<-sapply(binStarts, areaUnderGaussianBinTapered, 1,latency,precision,guessingDistribution,minSPE,maxSPE)
      
   totalArea<- sum(binAreasGaussian)
   
@@ -64,7 +64,7 @@ areaUnderGaussianBinEachObservationTapered<- function(SPEs, mu, sigma, guessingD
  SPEsBinStarts = SPEs - .5
  
  #Proportional to the probability of each bin, tapered. Will need to be normalized by total tapered area
- areasTapered<- sapply(SPEsBinStarts, areaUnderGaussianBinTapered, 1, mu, sigma) 
+ areasTapered<- sapply(SPEsBinStarts, areaUnderGaussianBinTapered, 1, mu, sigma, guessingDistribution,minSPE,maxSPE) 
  return (areasTapered)
 }
 
@@ -76,8 +76,7 @@ likelihood_mixture <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution) 
   #but arguably is the average height of the curve across the whole bin, which here is captured
   #by integrating the area under the curve for the bin domain.
   #E.g., for an SPE of 0, from -.5 to +.5  . See goodbournMatlabLikelihoodVersusR.png for a picture
-  
-  gaussianComponentProbs<- areaUnderGaussianBinEachObservationTapered(x,mu,sigma)
+  gaussianComponentProbs<- areaUnderGaussianBinEachObservationTapered(x,mu,sigma,guessingDistribution)
 
   #Now we have the probability of each observation, except they're not really probabilities
   #because the density they were based on doesn't sum to 1 because it wasn't a Gaussian
@@ -86,15 +85,39 @@ likelihood_mixture <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution) 
   #Make legit probabilities and compensate for  truncation of the Gaussian by summing the area of all the bins 
   #and dividing that into each bin, to normalize it so that the total of all the bins =1.
   totalAreaUnderTruncatedGaussianTapered<- 
-              areaUnderTruncatedGaussianTapered(mu, sigma, guessingDistribution)
+              areaUnderTruncatedGaussianTapered(mu, sigma, guessingDistribution,minSPE,maxSPE)
               
   gaussianComponentProbs<- gaussianComponentProbs / totalAreaUnderTruncatedGaussianTapered
-  
-  #An alternative, arguably better way to do it would be to assume that anything in the Gaussian tails
+  #(An alternative, arguably better way to do it would be to assume that anything in the Gaussian tails
   # beyond the  bins on either end ends up in those end bins, rather than effectively redistributing the
-  # tails across the whole thing.
-    
-  tapered_normal <- 
+  # tails across the whole thing.)
+
+  #Calculate the likelihood of each observation according to the guessing component of the mixture
+  #Convert SPEs to bind indices, so can look up in guessingDistribution
+  distroIndices<- x - minSPE + 1 #So minSPE becomes 1
+  guessingComponentProbs<- guessingDistribution[distroIndices]
+  #Make it a probability
+  guessingComponentProbs<- guessingComponentProbs / sum(guessingDistribution)
+  
+  #Do the mixture: deliver the probability of each observation reflecting both components.
+  pGaussianComponent <- p
+  pGuessingComponent <- 1-p
+  
+  gaussianContrib <- pGaussianComponent * gaussianComponentProbs
+  guessingContrib <- pGuessingComponent * guessingComponentProbs
+  
+  finalProbs<- gaussianContrib + guessingContrib
+  
+  #This code from Pat looks like it deals with the situation of normResult and uniResult being
+  # different shapes (a row versus a column) but I don't know how that can happen. And the conditional doesn't
+  # seem to test for that
+  # if (sum(length(gaussianContrib)==length(guessingContrib))!=2){ #This doesn't seem to make sense
+  #   msg=paste0('Looks like one of these is the transposed shape of the other, str(gaussianContrib)=',
+  #              str(gaussianContrib),' str(guessingContrib)=',str(guessingContrib) )
+  #   warning(msg)
+  #   finalProbs <- gaussianContrib + t(guessingContrib)
+  # } 
+  return(finalProbs)
 }
 
 
