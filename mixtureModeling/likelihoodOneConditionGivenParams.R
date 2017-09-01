@@ -9,6 +9,7 @@ if (basename(getwd()) != "tests") { #directory of this file, which should be mix
 source( file.path(pathNeeded,"createGuessingDistribution.R")  )
 source( file.path(pathNeeded,"pdf_Mixture_Single.R") ) 
 
+
 likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {
   #Note that the likelihood depends on the number of observations. So it'd be unfair to compare the 
   # fit across different datasets. Could divide by the number of observations to calculate

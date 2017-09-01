@@ -2,6 +2,7 @@ createGuessingDistribution<- function(minSPE,maxSPE,targetSP,numItemsInStream) {
   # Generate the 'pseudo-uniform' distribution, which is the expected distribution of errors if a random guess was
   # provided on every trial. This isn't an actual uniform distribution because the most extreme errors are only
   # possible on trials in which targets appear at their most extreme positions.
+  # minSPE and maxSPE is redundant with targetSP and numItemsInStream but saves calculation time.
   xDomain<- minSPE:maxSPE
   pseudoUniform <- matrix(xDomain, ncol=2,nrow=35, byrow=FALSE)
   #first column will be SPE. Second column will be expected frequency of that SPE from guessing
@@ -23,7 +24,6 @@ createGuessingDistribution<- function(minSPE,maxSPE,targetSP,numItemsInStream) {
     #where does this fit in to the entire range of possible SPEs
     minSPEthisRel<- minSPEthis - minSPE
     maxSPEthisRel<- maxSPEthis - minSPE
-    
     
     minThis <- 1-thisPos-minSPE+1
     maxThis <- numItemsInStream-thisPos-minSPE+1

@@ -31,6 +31,44 @@ areaUnderGaussianBinEachObservation<- function(SPEs, mu, sigma) {
  return (ans)   
 }
 
+areaUnderGaussianBinTapered<- function(binStart,binWidth,latency,precision,guessingDistribution,minSPE,maxSPE) {
+  #Calculate area under the unit curve for that bin
+  
+  area<- areaUnderGaussianBin(binStart,binWidth,latency,precision)
+  
+  binCenter <- round(binStart+bindWidth/2)
+  #Which bin index is this? So can look up in guessingDistribution
+  binIndex<- binCenter - minSPE + 1
+  
+  #Taper the Guassian area by the guessing distribution. Guessing distribution could be a large number but
+  # everything will be normalized at the end
+  area<- area * guessingDistribution[binIndex] 
+    
+  return (area)
+}
+
+areaUnderTruncatedGaussianTapered<- function(latency,precision,guessingDistribution,minSPE,maxSPE) {
+  #Calculate total area of the truncated and tapered Gaussian
+  binStarts= seq(minSPE-1/2, maxSPE-1/2, 1)
+  #Send each bin individually to the areaOfGaussianBin function with additional parameters
+  binAreasGaussian<-sapply(binStarts, areaUnderGaussianBinTapered, 1,latency,precision,guessingDistribution)
+     
+  totalArea<- sum(binAreasGaussian)
+  
+  return (totalArea)
+}
+  
+areaUnderGaussianBinEachObservationTapered<- function(SPEs, mu, sigma, guessingDistribution) {
+  
+ #Taper the Gaussian curve based on the guessingDistribution
+ SPEsBinStarts = SPEs - .5
+ 
+ #Proportional to the probability of each bin, tapered. Will need to be normalized by total tapered area
+ areasTapered<- sapply(SPEsBinStarts, areaUnderGaussianBinTapered, 1, mu, sigma) 
+ return (areasTapered)
+}
+
+
 likelihood_mixture <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution) { 
   #Calculate the likelihood of each data point (each SPE observed)
   #The data is discrete SPEs, but the model is a continuous Gaussian.
@@ -39,23 +77,19 @@ likelihood_mixture <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution) 
   #by integrating the area under the curve for the bin domain.
   #E.g., for an SPE of 0, from -.5 to +.5  . See goodbournMatlabLikelihoodVersusR.png for a picture
   
-  gaussianComponentProbs<- areaUnderGaussianBinEachObservation(x,mu,sigma)
+  gaussianComponentProbs<- areaUnderGaussianBinEachObservationTapered(x,mu,sigma)
 
   #Now we have the probability of each observation, except they're not really probabilities
   #because the density they were based on doesn't sum to 1 because it wasn't a Gaussian
-  #truncated to the domain of possible events.
-  #We can now accomplish truncation of the Gaussian by summing the area of all the bins and dividing
-  #that into each bin, to normalize it so that the total of all the bins =1.
+  #truncated to the domain of possible events. Plus it was tapered by the guessingDistribution
   
-  #Calculate total area of the truncated Gaussian
-  binStarts= seq(minSPE-1/2, maxSPE-1/2, 1)
-  #Send each bin individually to the areaOfGaussianBin function with additional parameters
-  binAreasGaussian<- sapply(binStarts, areaOfGaussianBin,   grain,latency,precision)
-  totalArea<- sum(binAreasGaussian)
+  #Make legit probabilities and compensate for  truncation of the Gaussian by summing the area of all the bins 
+  #and dividing that into each bin, to normalize it so that the total of all the bins =1.
+  totalAreaUnderTruncatedGaussianTapered<- 
+              areaUnderTruncatedGaussianTapered(mu, sigma, guessingDistribution)
+              
+  gaussianComponentProbs<- gaussianComponentProbs / totalAreaUnderTruncatedGaussianTapered
   
-  gaussianComponentProbs<- gaussianComponentProbs / totalArea
-  
-  probEachBin<- binAreasGaussian / sum(binAreasGaussian)
   #An alternative, arguably better way to do it would be to assume that anything in the Gaussian tails
   # beyond the  bins on either end ends up in those end bins, rather than effectively redistributing the
   # tails across the whole thing.

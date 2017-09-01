@@ -42,6 +42,8 @@ gaussianScaledForData<- function(efficacy,latency,precision,numObservations,minS
   #Slide it into a dataframe with the bins indicated
   gaussianThis<-data.frame(x=seq(minSPE,maxSPE,1), gaussianFreq=gaussianThis)
   
+  #Note: not tapered
+  
   return(gaussianThis)
 }
 
