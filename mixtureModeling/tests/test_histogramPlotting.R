@@ -18,6 +18,7 @@ data$letterSeq<- NULL
 source(file.path(pathNeeded,"histogramPlotting.R"))
 source(file.path(pathNeeded,"analyzeOneCondition.R"))
 source(file.path(pathNeeded,"parameterBounds.R"))
+source(file.path(pathNeeded,"calcCurvesDataframes.R"))
 
 #plot histogram
 require(ggplot2)
@@ -33,7 +34,7 @@ data <- data %>% mutate( orientation =ifelse(orientation==1, "Canonical","Invert
 #Test on one subject
 df<-data %>% dplyr::filter(subject=="BE")
 
-fitDfs<- calcFitDataframes(df,minSPE,maxSPE,numItemsInStream)
+fitDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)
 
 source(file.path(pathNeeded,"theme_apa.R"))
 
