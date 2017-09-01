@@ -6,7 +6,8 @@
 #No, but each of those 100 points is actually a grainsize portion of the curve.
 #So, calculate the area of the Gaussian density for each bin. Then multiply by a normalizing
 #factor so that the total area of all the bins equals the number of datapoints.
-#This is neglecting that we're talking about a truncated Gaussian.
+#This is neglecting that we're talking about a truncated Gaussian, and 
+#  possiby tapered by frequency of possible SPEs
 
 areaOfGaussianBin<- function(binStart,binWidth,latency,precision) {
   #Calculate area under the unit curve for that bin
