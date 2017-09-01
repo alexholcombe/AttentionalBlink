@@ -13,5 +13,5 @@ df<-readRDS( file.path(pathNeeded,"tests","exampleSubject.Rdata") )
 library(dplyr)
 df<- dplyr::filter(df, condition==1 & target==1)
 numItemsInStream<-24
-
-fitDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)
+minSPE<- -17; maxSPE<- 17
+curveDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)

@@ -34,39 +34,43 @@ data <- data %>% mutate( orientation =ifelse(orientation==1, "Canonical","Invert
 #Test on one subject
 df<-data %>% dplyr::filter(subject=="BE")
 
-fitDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)
+curveDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)
 
 source(file.path(pathNeeded,"theme_apa.R"))
 
-g=ggplot(df, aes(x=SPE)) 
+g=ggplot(df, aes(x=SPE)) + theme_apa()
 #plot data
 g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
-g<-g+ geom_line(data=fitDfs,aes(x=x,y=guessingFreq),color="yellow",size=1.2)
-g<-g+ geom_line(data=fitDfs,aes(x=x,y=gaussianFreq),color="blue",size=1.2)
-g<-g+ geom_point(data=fitDfs,aes(x=x,y=combinedFitFreq),color="green",size=1.2)
-g + theme_apa()
+g<-g+ geom_line(data=curveDfs,aes(x=x,y=guessingFreq),color="yellow",size=1.2)
+g<-g+ geom_line(data=curveDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=1.2)
+g<-g+ geom_point(data=curveDfs,aes(x=x,y=combinedFitFreq),color="green",size=1.2)
+g 
+#Also would like to plot finer-grained theoretical Gaussian
 ######
 
+df<-data %>% dplyr::filter(subject=="BE")
+g<- plotHistWithFit(df,minSPE,maxSPE,df$targetSP,numItemsInStream)
+show(g) 
 
 #Check troublesome cases.
 
 # BE,2,1
 df<- data %>% dplyr::filter(subject=="BE" & stream=="Right" & orientation=="Canonical") 
-estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
-g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
+#estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
+g<- plotHistWithFit(df,minSPE,maxSPE,df$targetSP,numItemsInStream)
 show(g) #Looks like efficacy wrong. Problem is that can fit the histogram very well with a tiny precision.
 #This looks like a general problem that will often cause precision to be underestimated.
 
 #BA right Inverted
 df <- data %>% dplyr::filter(subject=="BA" & stream=="Right" & orientation=="Inverted")
-estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
-g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
+#estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
+g<- plotHistWithFit(df,minSPE,maxSPE,df$targetSP,numItemsInStream)
 show(g) #Looks fine
 
 #BO,1,1
 df<- data %>% dplyr::filter(subject=="BO" & stream=="Left" & orientation=="Canonical") 
-estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
-g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
+#estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
+g<- plotHistWithFit(df,minSPE,maxSPE,df$targetSP,numItemsInStream)
 show(g) #How did BO do it? Never guessed, almost, only twice
 
 ll<- fitAndPlotHist(df,minSPE,maxSPE,numItemsInStream)

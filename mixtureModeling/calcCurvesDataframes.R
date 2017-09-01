@@ -1,3 +1,13 @@
+#Compensate for path getting set to mixtureModeling/tests/ by testthat
+if (basename(getwd()) != "tests") { #directory of this file, which should be mixtureModeling/
+  pathNeeded<- "mixtureModeling" 
+} else { 
+  pathNeeded <- ".." 
+}
+
+source( file.path(pathNeeded,"createGuessingDistribution.R")  )
+source( file.path(pathNeeded,"analyzeOneCondition.R")  )
+source( file.path(pathNeeded,"gaussianScaledForData.R")  )
 
 #To be used with ggplot. Idea is to split dataframe into conditions,
 # send it to calcCurvesDataframes to fit data if not already fit but definitely
@@ -19,25 +29,26 @@ calcCurvesDataframes<- function(df,minSPE,maxSPE,numItemsInStream) {
   }
   
   #create guessing distribution
-  pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
+  guessingDistro <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   #unitise it
-  pseudoUniform<-pseudoUniform/sum(pseudoUniform)
+  guessingDistro<- guessingDistro/sum(guessingDistro)
   #calculate points at appropriate height for this data
-  guessingThis<- (1-efficacy) * pseudoUniform * length(df$SPE)
-  fitDFs<-data.frame(x=minSPE:maxSPE, 
-                     guessingFreq=guessingThis,
-                     efficacy=efficacy, latency=latency, precision=precision, val=val) 
+  guessingThis<- (1-efficacy) * guessingDistro * length(df$SPE)
+  curveDfs<-data.frame(x=minSPE:maxSPE, 
+                     efficacy=efficacy, latency=latency, precision=precision, val=val,
+                     guessingFreq=guessingThis) 
   #Calculate Gaussian and sum
   #Need the quantized Gaussian
   grain<-1
   #print(paste0("efficacy=",efficacy,"latency=",latency,"precision=",precision))
   #print(paste0("minSPE=",minSPE,"maxSPE=",maxSPE))
   #print(paste0("df$SPE=",df$SPE))
-  gaussianThis<- gaussianScaledForData(efficacy,latency,precision,df$SPE,minSPE,maxSPE,grain) 
+  numObservations<- length(df$SPE)
+  gaussianThis<- gaussianScaledForData(efficacy,latency,precision,numObservations,minSPE,maxSPE,grain) 
   #print(gaussianThis)
-  fitDFs$gaussianFreq<- gaussianThis$SPE
+  curveDfs$gaussianFreq<- gaussianThis$gaussianFreq
   
-  fitDFs$combinedFitFreq<- fitDFs$gaussianFreq + fitDFs$guessingFreq
+  curveDfs$combinedFitFreq<- curveDfs$gaussianFreq + curveDfs$guessingFreq
   
-  return( fitDFs )
+  return( curveDfs )
 }
