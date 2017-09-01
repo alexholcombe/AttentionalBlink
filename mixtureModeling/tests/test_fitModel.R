@@ -1,7 +1,7 @@
 # test of fitModel intended to be used with the testthat package
 
 require(testthat)
-#To testthat, run test_file("mixtureModeling/tests/test_fitModel.r")
+#To testthat, run test_file("mixtureModeling/tests/test_fitModel.R")
 #Compensate for path getting set to mixtureModeling/tests/
 print(getwd())
 if (basename(getwd()) != "tests") {
@@ -34,8 +34,7 @@ test_that("Decent estimates", {
   fit<- fitModel(df$SPE, minSPE, maxSPE, pseudoUniform, startingParams, parameterBounds() )
   fit<- fit$content 
   warns<- fit$warnings
-  #print(fit)
-  
+
   #Check that standard fit method gives decent results
   expectedParamEstimates<- c(.84,.48,.99) # c(.37,1.2,.017)  #from L-BFGS-B
   LBFGSBparams<-  fit["L-BFGS-B",]

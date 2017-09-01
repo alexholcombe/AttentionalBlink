@@ -1,3 +1,4 @@
+#I THINK THIS HAS BEEN ABANDONED IN FAVOR OF .RMD FILE
 rm(list=ls()) #clear all variables
 #random orientation each trial. First experiment of second backwards-letters paper
 
