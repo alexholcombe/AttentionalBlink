@@ -62,12 +62,13 @@ plotHistWithFit<- function(df,minSPE,maxSPE,targetSP,numItemsInStream) {
 #   return(g)  
 # }
 
-fitAndPlotHist<- function(df,minSPE,maxSPE,numItemsInStream) {
-  
-  estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
-  g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
-  return( list(estimates=estimates, plot=g) )
-}
+
+# fitAndPlotHist<- function(df,minSPE,maxSPE,numItemsInStream) {
+#   #THIS SEEMS OUTDATED BECAUSE FITTING HAPPENS AUTOMATICALLY IF NOT PROVIDED
+#   estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
+#   g<- plotHistWithFit(df$SPE,minSPE,maxSPE,df$targetSP,numItemsInStream,estimates$p1,estimates$p2,estimates$p3)
+#   return( list(estimates=estimates, plot=g) )
+# }
 
 
 

@@ -8,6 +8,13 @@ if (basename(getwd()) != "tests") {
   pathNeeded <- ".." 
 }
 
+source(file.path(pathNeeded,"histogramPlotting.R"))
+source(file.path(pathNeeded,"analyzeOneCondition.R"))
+source(file.path(pathNeeded,"parameterBounds.R"))
+source(file.path(pathNeeded,"calcCurvesDataframes.R"))
+source(file.path(pathNeeded,"theme_apa.R"))
+
+
 data<- readRDS( file.path(pathNeeded,"tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
 #data<- readRDS( file.path("mixtureModeling/tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
 library(dplyr)
@@ -15,10 +22,6 @@ numItemsInStream<- length( data$letterSeq[1,] )
 #It seems that to work with dplyr, can't have array field like letterSeq
 data$letterSeq<- NULL
 
-source(file.path(pathNeeded,"histogramPlotting.R"))
-source(file.path(pathNeeded,"analyzeOneCondition.R"))
-source(file.path(pathNeeded,"parameterBounds.R"))
-source(file.path(pathNeeded,"calcCurvesDataframes.R"))
 
 #plot histogram
 require(ggplot2)
@@ -34,9 +37,8 @@ data <- data %>% mutate( orientation =ifelse(orientation==1, "Canonical","Invert
 #Test on one subject
 df<-data %>% dplyr::filter(subject=="BE")
 
+#Accomplish same as plotHistWithFit functionality
 curveDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)
-
-source(file.path(pathNeeded,"theme_apa.R"))
 
 g=ggplot(df, aes(x=SPE)) + theme_apa()
 #plot data
@@ -45,8 +47,19 @@ g<-g+ geom_line(data=curveDfs,aes(x=x,y=guessingFreq),color="yellow",size=1.2)
 g<-g+ geom_line(data=curveDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=1.2)
 g<-g+ geom_point(data=curveDfs,aes(x=x,y=combinedFitFreq),color="green",size=1.2)
 g 
-#Also would like to plot finer-grained theoretical Gaussian
+
+#Also plot finer-grained theoretical Gaussian
+#   estimates<- analyzeOneCondition(df,numItemsInStream,parameterBounds())
+efficacy<- curveDfs$efficacy[1]; latency<- curveDfs$latency[1]; precision<- curveDfs$precision[1]
+grain<-.05
+numObservations<- length(df$SPE)
+#Scale up the numObservations to compensate for the smaller grain size
+numObservations<- numObservations * 1/grain 
+gaussianThis<- gaussianScaledForData(efficacy,latency,precision,numObservations,minSPE,maxSPE,grain) 
+g + geom_line(data=gaussianThis,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
+  
 ######
+
 
 df<-data %>% dplyr::filter(subject=="BE")
 g<- plotHistWithFit(df,minSPE,maxSPE,df$targetSP,numItemsInStream)
