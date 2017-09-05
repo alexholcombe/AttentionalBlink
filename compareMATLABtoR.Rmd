@@ -138,7 +138,7 @@ For likelihood, lower neg log likelihood is better, so the negative number means
 
 Let's inspect histogram plots and fits. Note that in every case, the negative log likelihood is better (smaller) for R, showing that the R code provides a better fit than the MATLAB code.
 
-```{r, echo=FALSE, message=FALSE, fig.height=300}
+```{r, echo=FALSE, message=FALSE, fig.height=300, fig.width=10}
 #want fig.height of 10 per subject
 
 source( file.path(mixModelingPath,"calcCurvesDataframes.R") )
