@@ -7,7 +7,7 @@ if (basename(getwd()) != "tests") { #directory of this file, which should be mix
 }
 
 source( file.path(pathNeeded,"createGuessingDistribution.R")  )
-source( file.path(pathNeeded,"pdf_Mixture_Single.R") ) 
+source( file.path(pathNeeded,"likelihood_mixture.R")  )
 
 
 likelihoodOneConditionGivenParams<- function(df, numItemsInStream, params) {

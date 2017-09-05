@@ -16,8 +16,9 @@ source( file.path(pathNeeded,"calcCurvesDataframes.R")  )
 #.mat file been preprocessed into melted long dataframe by backwarsLtrsLoadRawData.R
 rawDataPath<- file.path(pathNeeded,"tests")
 data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) 
-
+minSPE<- -17; maxSPE<- 17
 df<- data
+numItemsInStream<- length(data$letterSeq[1,]) #24
 df$letterSeq<- NULL #dplyr can't handle dataframes with this type of array in them
 #df<- dplyr::filter(df, subject=="AA",stream=="Right", orientation=="Canonical")
 
@@ -48,17 +49,17 @@ estimates_M<- estimates_MATLAB
 #create temporary dataframe with data plus MATLAB estimates to generate curves
 dataStrippedOfEstimates<- df
 
+group_vars <- c("orientation", "stream", "subject")
+
+
 #Calc numObservations to each condition. This is needed only for scaling the fine-grained Gaussian
 #Calc the number of observations for each condition, because gaussianScaledforData needs to know.
+#To use variable names in variables with dplyr, https://stackoverflow.com/questions/43415475/how-to-parametrize-function-calls-in-dplyr-0-7/
 dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = group_vars) %>% summarise(numObservations = n())
 #add numObservations to MATLAB estimates, which will then be merged with raw data
 estimates_M<- merge(estimates_M,dNum)
 #merge MATLAB estimates with raw data
 dM<-merge( dataStrippedOfEstimates, estimates_M )
-
-#To use variable names in variables with dplyr, have to go through some contortions:
-#https://stackoverflow.com/questions/43415475/how-to-parametrize-function-calls-in-dplyr-0-7/
-group_vars <- c("orientation", "stream", "subject")
 
 
 dM<- filter(dM, subject=="AA", orientation =="Canonical")
@@ -74,7 +75,6 @@ g=ggplot(dM, aes(x=SPE)) + facet_grid(subject+stream+orientation~.)
 g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
 g<-g +theme_apa() 
 sz=.8
-#THE MATLAB BLUE AND YELLOW AND GREEN LOOKS WRONG
 g<-g+ geom_point(data=curvesMATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
 g<-g+ geom_line(data=curvesMATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
 g<-g+ geom_line(data=curvesMATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
@@ -86,32 +86,19 @@ g<-g + geom_text(data=curvesMATLAB,aes(x=-7,y=28, label = paste("plain(e)==", ro
 show(g)
 #Haven't calculated logLikelihood for MATLAB
 #geom_text(data=curvesMATLAB,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) 
+
+#Now plot the underlying continuous Gaussian too, not just the discretized Gaussian, so can potentialy
+# see where Pat's fit based on density height yields funky things.
 grain<-.05
-
-
-#Need to calculate Gaussian heights at this finer grain for each condition
-#Each call to gaussianScaledForData returns a larger dataframe than was sent. 
-# To do that with dplyr, need to be part of dataframe
-
-gaussianScaledFromDataframe<- function(df,minSPE,maxSPE,grain) {
-  #Should be sent a one-line dataframe with efficacy,latency,precision
-  #Want to expand that into entire curve, with many different SPE values
-  curve<- gaussianScaledForData(df$efficacy,df$latency,df$precision,df$numObservations,minSPE,maxSPE,grain)
-  
-  #To merge the parameter estimates with every line of this set of x,gassianFreq points for the curve:
-  # merge(iris, data.frame(time=1:10), by=NULL) https://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames
-  withParams<- merge(df, curve, by=NULL)
-  return(withParams)
-}
-
 gaussianFine<- estimates_M %>% group_by_at(.vars = group_vars) %>% do( 
   gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
 
 g<-g + geom_line(data=gaussianFine,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
-#Wow , great illustration of the dangers of not integrating the whole bin, if that's the reason
+#Wow , great illustration of the dangers of not integrating the whole bin, if that's the reason.
+#In AA, right, canonical graph, 
+# a salient difference is visible between the continuous Gaussian and the discretized predicted bin count.
+# I think this is because the Gaussian is so steep (such low sigma) that integrating the bin area gives a 
+# large number. But note that this Gaussian was fit by MATLAB, so it's actually the height of the Gaussian 
+# at the center of the bin that's what was used for the fit.
 
-gaussianFine<- estimates_M %>% dplyr::filter(subject=="AA") %>% group_by(orientation,stream,subject) %>% do( 
-  gaussianScaledFromDataframe(.,numObservations,minSPE,maxSPE,grain) )
-
-
-gaussianFine<- gaussianScaledForData(efficacy,latency,precision,numObservations,minSPE,maxSPE,grain) 
+show(g)
