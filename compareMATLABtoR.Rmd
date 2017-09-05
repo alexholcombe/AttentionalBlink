@@ -1,7 +1,7 @@
 ---
 title: "R is better than MATLAB"
 author: "Alex Holcombe"
-date: "8/24/2017"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document
 ---
 
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE,  comment = NA)
 
 Import data
 
-```{r importData, echo=FALSE}
+```{r importData, echo=FALSE, message=FALSE}
 #rm(list=ls())
 
 mixModelingPath<- file.path("mixtureModeling")
@@ -56,7 +56,7 @@ estimates_MATLAB<-estimates_MATLAB %>%
 
 ```
 
-```{r calcLikelihoodForMATLABparams, echo=FALSE}
+```{r calcLikelihoodForMATLABparams, echo=FALSE, message=FALSE}
   #Want to add likelihood for MATLAB estimates to dataframe dfMl. Then can plot it with ggplot
   dfM<-merge( df, estimates_MATLAB )
   #dfM<- dfM %>% 
@@ -81,11 +81,12 @@ estimates_MATLAB<-estimates_MATLAB %>%
 
 ```
 
-Fit mixture model with R if not already available.
+Fit mixture model with R if not already available. Exists = 
 ```{r, echo=FALSE, message=FALSE}
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 source( file.path(mixModelingPath,"parameterBounds.R") )
 
+print(exists("estimates"))
 if (!exists("estimates")) {
   estimates<- df %>%    #filter(subject=="AA") %>%
     group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
@@ -133,8 +134,8 @@ Let's inspect histogram plots and fits. Note that in every case, the negative lo
 source( file.path(mixModelingPath,"calcCurvesDataframes.R") )
 
 #create R curves
-df<- df  %>% dplyr::filter(subject=="AA")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
-#df<- df %>% dplyr::filter(subject=="AA",stream=="Right", orientation=="Canonical")
+df<- df  %>%  dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+#dplyr::filter(subject=="AA",orientation=="Canonical")
 source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
 source( file.path(mixModelingPath,"theme_apa.R") ) #for calcFitDataframes
 
@@ -171,7 +172,6 @@ dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = condtnVariableNames) %>% 
 estimates_M<- merge(estimates_M,dNum)
 #merge MATLAB estimates with raw data
 dM<-merge( dataStrippedOfEstimates, estimates_M )
-grain<-.1
 gaussianFineM<- estimates_M %>% group_by_at(.vars = condtnVariableNames) %>% do(
   gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
 
@@ -191,8 +191,8 @@ gaussianFineR<- gaussianFineR %>% select(-val,-warnings)
 gaussianFineM<- gaussianFineM %>% select(-val_M)
 gaussFine_R_M <- rbind( data.frame(gaussianFineR), data.frame(gaussianFineM) )
 
-
-g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(subject+stream+orientation~lang)
+#PLOT EVERYTHING
+g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(subject+stream+orientation~lang,  scales="free_y")
 g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
 g<-g +theme_apa() #+theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
 #g<-g+ theme(line=element_blank(), panel.border = element_blank())
@@ -201,15 +201,11 @@ g<-g+ geom_point(data=curves_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreu
 g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
 g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 
-
-g<-g + geom_line(data=gaussFine_R_M,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
 #Plot the underlying Gaussian too, not just the discretized Gaussian
-show(g)
-
-
+g<-g + geom_line(data=gaussFine_R_M,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
 
 numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream,dfBoth$lang))
-fontSz = 80/numGroups
+fontSz = 20/numGroups
 g<-g + geom_text(data=curves_R_MATLAB,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves_R_MATLAB,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves_R_MATLAB,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
