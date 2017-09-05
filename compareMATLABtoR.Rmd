@@ -133,7 +133,7 @@ Let's inspect histogram plots and fits. Note that in every case, the negative lo
 source( file.path(mixModelingPath,"calcCurvesDataframes.R") )
 
 #create R curves
-df<- df  %>% dplyr::filter(subject <"AC")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+df<- df  %>% dplyr::filter(subject=="AA")  #dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
 #df<- df %>% dplyr::filter(subject=="AA",stream=="Right", orientation=="Canonical")
 source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
 source( file.path(mixModelingPath,"theme_apa.R") ) #for calcFitDataframes
@@ -143,6 +143,16 @@ df<- merge(df,estimates)
 
 curvesR<- df %>% group_by_at(.vars = condtnVariableNames) %>% 
   do(calcCurvesDataframes(.,minSPE,maxSPE,numItemsInStream))
+
+#Calc numObservations to each condition. This is needed only for scaling the fine-grained Gaussian
+#Calc the number of observations for each condition, because gaussianScaledforData needs to know.
+dfGroups<- df %>% group_by_at(.vars = condtnVariableNames) %>% summarise(nPerCond = n())
+#add nPerCond back to parameter estimates
+estimates<- merge(estimates,dfGroups)
+grain<-.05
+gaussianFineR<- estimates %>% group_by_at(.vars = condtnVariableNames) %>% do(
+  gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
+
 
 #create MATLAB curves
 #need to rename parameters so that calcCurvesDataframes can find them
@@ -154,12 +164,33 @@ dM<- dM %>% rename( val = val_M ) #has to be called val so calcFitDataframes use
 curvesMATLAB<- dM %>% group_by_at(.vars = condtnVariableNames) %>% 
             do(calcCurvesDataframes(.,minSPE,maxSPE,numItemsInStream))
 
+#Calculate fine-grained Gaussian for MATLAB
+#Calc the number of observations for each condition, because gaussianScaledforData needs to know.
+dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = condtnVariableNames) %>% summarise(nPerCond = n())
+#add nPerCond to MATLAB estimates, which will then be merged with raw data
+estimates_M<- merge(estimates_M,dNum)
+#merge MATLAB estimates with raw data
+dM<-merge( dataStrippedOfEstimates, estimates_M )
+grain<-.1
+gaussianFineM<- estimates_M %>% group_by_at(.vars = condtnVariableNames) %>% do(
+  gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
+
+
+
 #Concatenate R and MATLAB into single dataframe
 curvesR$lang<-"R"; curvesMATLAB$lang<-"MATLAB"
 curves_R_MATLAB <- rbind( data.frame(curvesR), data.frame(curvesMATLAB) )
 #To facilitate plotting,
 #make dataframe containing the raw data twice, one for R plots column, one for MATLAB plots column (data identical)
 dfBoth<-rbind(   df %>% mutate(lang="R"), df %>% mutate(lang="MATLAB")  )
+
+#Concatenate fine-grained gaussian for R and MATLAB into single dataframe, so can plot both with ggplot
+gaussianFineR$lang<-"R"; gaussianFineM$lang<-"MATLAB"; 
+#Get the col names to match by only using a few columns
+gaussianFineR<- gaussianFineR %>% select(-val,-warnings)
+gaussianFineM<- gaussianFineM %>% select(-val_M)
+gaussFine_R_M <- rbind( data.frame(gaussianFineR), data.frame(gaussianFineM) )
+
 
 g=ggplot(dfBoth, aes(x=SPE)) + facet_grid(subject+stream+orientation~lang)
 g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
@@ -171,21 +202,9 @@ g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size
 g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 
 
-#Calc numObservations to each condition. This is needed only for scaling the fine-grained Gaussian
-#Calc the number of observations for each condition, because gaussianScaledforData needs to know.
-#To use variable names in variables with dplyr, https://stackoverflow.com/questions/43415475/how-to-parametrize-function-calls-in-dplyr-0-7/
-dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = condtnVariableNames) %>% summarise(numObservations = n())
-#add numObservations to MATLAB estimates, which will then be merged with raw data
-estimates_M<- merge(estimates_M,dNum)
-#merge MATLAB estimates with raw data
-dM<-merge( dataStrippedOfEstimates, estimates_M )
-grain<-.05
-gaussianFine<- estimates_M %>% group_by_at(.vars = group_vars) %>% do(
-  gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
-
-g<-g + geom_line(data=gaussianFine,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
+g<-g + geom_line(data=gaussFine_R_M,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
 #Plot the underlying Gaussian too, not just the discretized Gaussian
-
+show(g)
 
 
 

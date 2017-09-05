@@ -74,7 +74,9 @@ gaussianScaledForDataOld<- function(efficacy,latency,precision,numObservations,m
 gaussianScaledFromDataframe<- function(df,minSPE,maxSPE,grain) {
   #Should be sent a one-line dataframe with efficacy,latency,precision
   #Want to expand that into entire curve, with many different SPE values
-  curve<- gaussianScaledForData(df$efficacy,df$latency,df$precision,df$numObservations,minSPE,maxSPE,grain)
+  #nPerCond is number of observations per condition
+  stopifnot( "nPerCond" %in% colnames(df) )
+  curve<- gaussianScaledForData(df$efficacy,df$latency,df$precision,df$nPerCond,minSPE,maxSPE,grain)
   
   #To merge the parameter estimates with every line of this set of x,gassianFreq points for the curve:
   # merge(iris, data.frame(time=1:10), by=NULL) https://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames
