@@ -82,12 +82,22 @@ estimates_MATLAB<-estimates_MATLAB %>%
 ```
 
 Fit mixture model with R if not already available. Exists = 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, cache=TRUE}
+#Setting cache = TRUE in hopes won't have to recalculate estimates "if cached results exist and this code chunk has not been changed since last run" 
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
 source( file.path(mixModelingPath,"parameterBounds.R") )
 
-print(exists("estimates"))
-if (!exists("estimates")) {
+#Check whether already have parameter estimates or instead need to do it
+calculate<-FALSE
+if (!exists("estimates")) { 
+  calculate<-TRUE 
+  } else {  #calculate if different numbers of subjects in R estimates and MATLAB estimates
+  if (!setequal(estimates$subject,estimates_MATLAB$subject)) {
+    calculate<-TRUE
+  }
+}
+  
+if (calculate) {
   estimates<- df %>%    #filter(subject=="AA") %>%
     group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
     do(analyzeOneCondition(.,numItemsInStream,parameterBounds()))
@@ -134,7 +144,7 @@ Let's inspect histogram plots and fits. Note that in every case, the negative lo
 source( file.path(mixModelingPath,"calcCurvesDataframes.R") )
 
 #create R curves
-df<- df  %>%  dplyr::filter(subject <="AP") #dplyr::filter(subject <= "BD" & subject >="AP")
+df<- df  %>%  dplyr::filter(subject <="BB") #dplyr::filter(subject <= "BD" & subject >="AP")
 #dplyr::filter(subject=="AA",orientation=="Canonical")
 source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
 source( file.path(mixModelingPath,"theme_apa.R") ) #for calcFitDataframes
@@ -175,7 +185,7 @@ dM<-merge( dataStrippedOfEstimates, estimates_M )
 gaussianFineM<- estimates_M %>% group_by_at(.vars = condtnVariableNames) %>% do(
   gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
 
-
+#is THE CACHE CACHING THE ESTIMATES?
 
 #Concatenate R and MATLAB into single dataframe
 curvesR$lang<-"R"; curvesMATLAB$lang<-"MATLAB"
@@ -204,8 +214,8 @@ g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",s
 #Plot the underlying Gaussian too, not just the discretized Gaussian
 g<-g + geom_line(data=gaussFine_R_M,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
 
-numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream,dfBoth$lang))
-fontSz = 20/numGroups
+numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream))
+fontSz = 300/numGroups
 g<-g + geom_text(data=curves_R_MATLAB,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves_R_MATLAB,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves_R_MATLAB,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
