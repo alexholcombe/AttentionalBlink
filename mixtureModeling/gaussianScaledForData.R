@@ -38,7 +38,11 @@ gaussianScaledForData<- function(efficacy,latency,precision,numObservations,minS
   #The area under the histogram does not sum to 1, it instead sums to the number of trials.
   #So we need to achieve the same thing for our theoretical Gaussian curve, except that
   #our Gaussian curve is responsibe for only efficacy proportion of the trials.
-  gaussianThis<- probEachBin * numObservations * efficacy 
+  
+  #numObservations reflects grain of 1. But if using finer grain to plot, need to scale up
+  numTheoreticalObservations <- numObservations * 1/grain
+  
+  gaussianThis<- probEachBin * numTheoreticalObservations * efficacy 
   
   #Slide it into a dataframe with the bins indicated
   gaussianThis<-data.frame(x=seq(minSPE,maxSPE,grain), gaussianFreq=gaussianThis)
@@ -61,3 +65,23 @@ gaussianScaledForDataOld<- function(efficacy,latency,precision,numObservations,m
   gaussianThis<-data.frame(x=domain, gaussianFreq=gaussianThis)
   return(gaussianThis)
 }
+
+
+#Need to calculate Gaussian heights at this finer grain for each condition
+#Each call to gaussianScaledForData returns a larger dataframe than was sent. 
+# To do that with dplyr, need to be part of dataframe
+
+gaussianScaledFromDataframe<- function(df,minSPE,maxSPE,grain) {
+  #Should be sent a one-line dataframe with efficacy,latency,precision
+  #Want to expand that into entire curve, with many different SPE values
+  curve<- gaussianScaledForData(df$efficacy,df$latency,df$precision,df$numObservations,minSPE,maxSPE,grain)
+  
+  #To merge the parameter estimates with every line of this set of x,gassianFreq points for the curve:
+  # merge(iris, data.frame(time=1:10), by=NULL) https://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames
+  withParams<- merge(df, curve, by=NULL)
+  return(withParams)
+}
+
+# Example call:
+#gaussianFine<- estimates_M %>% group_by_at(.vars = group_vars) %>% do( 
+#  gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )

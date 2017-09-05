@@ -27,7 +27,6 @@ df <- df %>% mutate( stream =ifelse(stream==1, "Left","Right") )
 #mutate condition to orientation
 df <- df %>% mutate( orientation =ifelse(orientation==1, "Canonical","Inverted") )
 
-
 #Load in MATLAB parameter estimates from Chris Bush run of MATLAB
 #Import MATLAB fits
 MATLABmixtureModelOutputPath<-"~/Google\ Drive/Backwards\ paper/secondPaper/E1/Data/MixModData"
@@ -48,13 +47,26 @@ estimates_MATLAB<-estimates_MATLAB %>%
 estimates_M<- estimates_MATLAB 
 #create temporary dataframe with data plus MATLAB estimates to generate curves
 dataStrippedOfEstimates<- df
+
+#Calc numObservations to each condition. This is needed only for scaling the fine-grained Gaussian
+#Calc the number of observations for each condition, because gaussianScaledforData needs to know.
+dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = group_vars) %>% summarise(numObservations = n())
+#add numObservations to MATLAB estimates, which will then be merged with raw data
+estimates_M<- merge(estimates_M,dNum)
+#merge MATLAB estimates with raw data
 dM<-merge( dataStrippedOfEstimates, estimates_M )
 
-dM<- filter(dM, subject=="AA") #, orientation =="Canonical")
+#To use variable names in variables with dplyr, have to go through some contortions:
+#https://stackoverflow.com/questions/43415475/how-to-parametrize-function-calls-in-dplyr-0-7/
+group_vars <- c("orientation", "stream", "subject")
+
+
+dM<- filter(dM, subject=="AA", orientation =="Canonical")
+estimates_M<- filter(estimates_M, subject=="AA", orientation =="Canonical")
 
 #calcFitDataframes should now use MATLAB estimates rather than using R to calculate its own,
 # because it detects presence of efficacy variable
-curvesMATLAB<- dM %>% group_by(orientation,stream,subject) %>% 
+curvesMATLAB<- dM %>% group_by_at(.vars = group_vars) %>% 
   do(calcCurvesDataframes(.,minSPE,maxSPE,numItemsInStream))
 
 
@@ -74,48 +86,32 @@ g<-g + geom_text(data=curvesMATLAB,aes(x=-7,y=28, label = paste("plain(e)==", ro
 show(g)
 #Haven't calculated logLikelihood for MATLAB
 #geom_text(data=curvesMATLAB,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) 
-grain<-.5 #.05
-numObservations<- length(df$SPE)
-#Scale up the numObservations to compensate for the smaller grain size
-numObservations<- numObservations * 1/grain 
+grain<-.05
+
+
 #Need to calculate Gaussian heights at this finer grain for each condition
 #Each call to gaussianScaledForData returns a larger dataframe than was sent. 
-# To do that with dplyr, 
+# To do that with dplyr, need to be part of dataframe
 
-
-gaussianScaledFromDataframe<- function(df, numObservations,minSPE,maxSPE,grain) {
-  #ans<- data.frame(e=df$efficacy, x=c(1,2,3))
-  print(df$efficacy)  
-  ans<- merge(df, data.frame(x=c(1,2,3)), by=NULL)
-  return (ans)
-}
-# merge(iris, data.frame(time=1:10), by=NULL) https://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames
-
-estimates_M %>% dplyr::filter(subject=="AA") %>% group_by(orientation,stream,subject) %>% do( 
-  gaussianScaledFromDataframe(.,numObservations,minSPE,maxSPE,grain) )
-
-
-gaussianScaledFromDataframe<- function(df, numObservations,minSPE,maxSPE,grain) {
+gaussianScaledFromDataframe<- function(df,minSPE,maxSPE,grain) {
   #Should be sent a one-line dataframe with efficacy,latency,precision
   #Want to expand that into entire curve, with many different SPE values
-  curve<- gaussianScaledForData(df$efficacy,df$latency,df$precision,numObservations,minSPE,maxSPE,grain)
-  print(curve)
-  #withParams<- merge(df, data.frame(x=c(1,2,3)), by=NULL)
-  withParams<<- merge(df, curve, by=NULL)
+  curve<- gaussianScaledForData(df$efficacy,df$latency,df$precision,df$numObservations,minSPE,maxSPE,grain)
+  
+  #To merge the parameter estimates with every line of this set of x,gassianFreq points for the curve:
+  # merge(iris, data.frame(time=1:10), by=NULL) https://stackoverflow.com/questions/11693599/alternative-to-expand-grid-for-data-frames
+  withParams<- merge(df, curve, by=NULL)
   return(withParams)
 }
 
-estimates_M %>% dplyr::filter(subject=="AA") %>% group_by(orientation,stream,subject) %>% do( 
+gaussianFine<- estimates_M %>% group_by_at(.vars = group_vars) %>% do( 
+  gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
+
+g<-g + geom_line(data=gaussianFine,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
+#Wow , great illustration of the dangers of not integrating the whole bin, if that's the reason
+
+gaussianFine<- estimates_M %>% dplyr::filter(subject=="AA") %>% group_by(orientation,stream,subject) %>% do( 
   gaussianScaledFromDataframe(.,numObservations,minSPE,maxSPE,grain) )
- 
-estimates_M %>% dplyr::filter(subject=="AA") %>% group_by(orientation,stream,subject) %>% do(print(.))
-  
 
 
-estimates_M %>% dplyr::filter(subject=="AA",stream=="Left",orientation=="Inverted") %>% group_by(orientation,stream,subject) %>% 
-                gaussianScaledFromDataframe(.,numObservations,minSPE,maxSPE,grain)
-
-dM %>% do(gaussianScaledForData(.$efficacy,.$latency,.$precision,numObservations,minSPE,maxSPE,grain))
-          
 gaussianFine<- gaussianScaledForData(efficacy,latency,precision,numObservations,minSPE,maxSPE,grain) 
-g + geom_line(data=gaussianFine,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
