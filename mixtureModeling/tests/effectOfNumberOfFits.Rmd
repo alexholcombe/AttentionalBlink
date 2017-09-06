@@ -43,7 +43,7 @@ estimates<-dg %>% group_by(subject,target,condition) %>%
 ```
 
 Here are the estimates from one run for the one data sample:
-```{r fit, echo=FALSE, message=FALSE}
+```{r estimates, echo=FALSE, message=FALSE}
 print(estimates)
 ```
 
@@ -55,11 +55,11 @@ Calculate the standard deviation of the fits for just one sample of data. The va
 #Maybe repeat the raw data dataframe as many times as want to fit. Then group by *replicate* and so get
 #one row for each replicate fit.
 
-reps<-10
+reps<-20
 #replicate raw data
-dn<- dg[rep(1:nrow(dg),times = reps), ]
+dn<- df[rep(1:nrow(df),times = reps), ]
 #add a rep field indicating replicate number
-dn$replicate <- rep(1:reps, each=nrow(dg))
+dn$replicate <- rep(1:reps, each=nrow(df))
 
 numReplicates<-1 #Only fit the model once because we are manipulating number of fits with reps
 estimates<-dn %>% group_by(replicate) %>% 
@@ -81,9 +81,9 @@ Do it for each of many conditions to make sure it is true for each condition. He
 
 ```{r many conditions, echo=FALSE, message=FALSE}
 
-dg<-filter(df, subject<"AC")
+#dg<-filter(df, subject<"AC")
 
-reps<-10
+reps<-30
 #replicate raw data
 dn<- dg[rep(1:nrow(dg),times = reps), ]
 #add a rep field indicating replicate number
@@ -102,10 +102,12 @@ w<-many %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("effi
 #it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
 w<-data.frame(w)
 
-print( select(w, -ends_with("Mean")) )
+print( select(w, -ends_with("Mean")) ) #Don't print the mean as then can't see important stuff in single line
 ```
 
-Check whether there is any condition with high variation
+Check whether there is any condition with high variation - standard deviation greater than .05
 
-```{r many conditions, echo=FALSE, message=FALSE}
+```{r bad conditions, echo=FALSE, message=FALSE}
+filter_at( w, vars(ends_with("Sd")), any_vars(. > .05) )
+
 ```
