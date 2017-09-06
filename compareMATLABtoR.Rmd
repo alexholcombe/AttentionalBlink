@@ -81,7 +81,7 @@ estimates_MATLAB<-estimates_MATLAB %>%
 
 ```
 
-Fit mixture model with R if not already available. Exists = 
+Fit mixture model with R (if fitting not previously done and cached). 
 ```{r, echo=FALSE, message=FALSE, cache=TRUE}
 #Setting cache = TRUE in hopes won't have to recalculate estimates "if cached results exist and this code chunk has not been changed since last run" 
 source( file.path(mixModelingPath,"analyzeOneCondition.R") )
@@ -138,13 +138,18 @@ For likelihood, lower neg log likelihood is better, so the negative number means
 
 Let's inspect histogram plots and fits. Note that in every case, the negative log likelihood is better (smaller) for R, showing that the R code provides a better fit than the MATLAB code.
 
-```{r, echo=FALSE, message=FALSE, fig.height=300, fig.width=10}
+* yellow = guessing component 
+* light blue = Gaussian component
+* green = sum of the guessing and Gaussian components. In other words, the histogram heights predicted by the model
+* dark blue = continuous Gaussian. This helps get a sense of the effect of discretising the Gaussian. For instance, it's possible (especially using Pat's method, it seems), for the Gaussian peak to fly high above the bars and still fit the discrete bins (or bin centers, in Pat's method), suggesting an undesirably high estimates of the efficacy (likely accompanied by an undesirably low precision)
+
+```{r, echo=FALSE, message=FALSE, fig.height=360, fig.width=10}
 #want fig.height of 10 per subject
 
 source( file.path(mixModelingPath,"calcCurvesDataframes.R") )
 
 #create R curves
-df<- df  %>%  dplyr::filter(subject <="BB") #dplyr::filter(subject <= "BD" & subject >="AP")
+df<- df # %>%  dplyr::filter(subject <="BB") #dplyr::filter(subject <= "BD" & subject >="AP")
 #dplyr::filter(subject=="AA",orientation=="Canonical")
 source( file.path(mixModelingPath,"histogramPlotting.R") ) #for calcFitDataframes
 source( file.path(mixModelingPath,"theme_apa.R") ) #for calcFitDataframes
@@ -185,8 +190,6 @@ dM<-merge( dataStrippedOfEstimates, estimates_M )
 gaussianFineM<- estimates_M %>% group_by_at(.vars = condtnVariableNames) %>% do(
   gaussianScaledFromDataframe(.,minSPE,maxSPE,grain) )
 
-#is THE CACHE CACHING THE ESTIMATES?
-
 #Concatenate R and MATLAB into single dataframe
 curvesR$lang<-"R"; curvesMATLAB$lang<-"MATLAB"
 curves_R_MATLAB <- rbind( data.frame(curvesR), data.frame(curvesMATLAB) )
@@ -207,15 +210,16 @@ g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
 g<-g +theme_apa() #+theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
 #g<-g+ theme(line=element_blank(), panel.border = element_blank())
 sz=.8
-g<-g+ geom_point(data=curves_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
-g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
-g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
-
-#Plot the underlying Gaussian too, not just the discretized Gaussian
+#Plot the underlying Gaussian , not just the discretized Gaussian
 g<-g + geom_line(data=gaussFine_R_M,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
 
+g<-g+ geom_point(data=curves_R_MATLAB,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
+g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=guessingFreq),color="yellow",size=sz)
+#Discretized Gaussian
+g<-g+ geom_line(data=curves_R_MATLAB,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
+
 numGroups<- length(table(dfBoth$orientation,dfBoth$subject,dfBoth$stream))
-fontSz = 300/numGroups
+fontSz = 400/numGroups
 g<-g + geom_text(data=curves_R_MATLAB,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves_R_MATLAB,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves_R_MATLAB,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
