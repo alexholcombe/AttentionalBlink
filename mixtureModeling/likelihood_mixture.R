@@ -58,7 +58,7 @@ areaUnderTruncatedGaussianTapered<- function(latency,precision,guessingDistribut
   return (totalArea)
 }
   
-areaUnderGaussianBinEachObservationTapered<- function(SPEs, mu, sigma, guessingDistribution) {
+areaUnderGaussianBinEachObservationTapered<- function(SPEs, mu, sigma, guessingDistribution,minSPE,maxSPE) {
   
  #Taper the Gaussian curve based on the guessingDistribution
  SPEsBinStarts = SPEs - .5
@@ -76,7 +76,7 @@ likelihood_mixture <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution) 
   #but arguably is the average height of the curve across the whole bin, which here is captured
   #by integrating the area under the curve for the bin domain.
   #E.g., for an SPE of 0, from -.5 to +.5  . See goodbournMatlabLikelihoodVersusR.png for a picture
-  gaussianComponentProbs<- areaUnderGaussianBinEachObservationTapered(x,mu,sigma,guessingDistribution)
+  gaussianComponentProbs<- areaUnderGaussianBinEachObservationTapered(x,mu,sigma,guessingDistribution,minSPE,maxSPE)
 
   #Now we have the probability of each observation, except they're not really probabilities
   #because the density they were based on doesn't sum to 1 because it wasn't a Gaussian

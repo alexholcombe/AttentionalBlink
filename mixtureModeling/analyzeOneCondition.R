@@ -12,7 +12,8 @@ source( file.path(pathNeeded,"fitModel.R") )
 
 source( file.path(pathNeeded,"parametersGuess.R") )
 
-analyzeOneCondition<- function(df, numItemsInStream, paramBounds) {
+analyzeOneCondition<- function(df, numItemsInStream, paramBounds, nReplicates=3) {
+  #nReplicates. Number of times to repeat each fit with different starting values. Pat maybe used 100
   # Calculate the domain of possible serial position errors.
   possibleTargetSP<- sort(unique(df$targetSP))
   minTargetSP <- min(possibleTargetSP)
@@ -24,7 +25,6 @@ analyzeOneCondition<- function(df, numItemsInStream, paramBounds) {
   pseudoUniform <- createGuessingDistribution(minSPE,maxSPE,df$targetSP,numItemsInStream)
   
   # Set some model-fitting parameters.
-  nReplicates <- 3# 100# Number of times to repeat each fit with different starting values
   fitMaxIter <- 10^4# Maximum number of fit iterations
   fitMaxFunEvals <- 10^4# Maximum number of model evaluations
   

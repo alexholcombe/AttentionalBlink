@@ -52,10 +52,10 @@ dataStrippedOfEstimates<- df
 group_vars <- c("orientation", "stream", "subject")
 
 
-#Calc numObservations to each condition. This is needed only for scaling the fine-grained Gaussian
+#Calc nPerCond to each condition. This is needed only for scaling the fine-grained Gaussian
 #Calc the number of observations for each condition, because gaussianScaledforData needs to know.
 #To use variable names in variables with dplyr, https://stackoverflow.com/questions/43415475/how-to-parametrize-function-calls-in-dplyr-0-7/
-dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = group_vars) %>% summarise(numObservations = n())
+dNum<- dataStrippedOfEstimates %>% group_by_at(.vars = group_vars) %>% summarise(nPerCond = n())
 #add numObservations to MATLAB estimates, which will then be merged with raw data
 estimates_M<- merge(estimates_M,dNum)
 #merge MATLAB estimates with raw data
@@ -64,6 +64,7 @@ dM<-merge( dataStrippedOfEstimates, estimates_M )
 
 dM<- filter(dM, subject=="AA", orientation =="Canonical")
 estimates_M<- filter(estimates_M, subject=="AA", orientation =="Canonical")
+
 
 #calcFitDataframes should now use MATLAB estimates rather than using R to calculate its own,
 # because it detects presence of efficacy variable
