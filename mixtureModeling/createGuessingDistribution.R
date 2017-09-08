@@ -4,7 +4,8 @@ createGuessingDistribution<- function(minSPE,maxSPE,targetSP,numItemsInStream) {
   # possible on trials in which targets appear at their most extreme positions.
   # minSPE and maxSPE is redundant with targetSP and numItemsInStream but saves calculation time.
   xDomain<- minSPE:maxSPE
-  pseudoUniform <- matrix(xDomain, ncol=2,nrow=35, byrow=FALSE)
+  numPoosibleSPEs<- maxSPE-minSPE+1
+  pseudoUniform <- matrix(xDomain, ncol=2,nrow=numPoosibleSPEs, byrow=FALSE)
   #first column will be SPE. Second column will be expected frequency of that SPE from guessing
   pseudoUniform[,2] <-0
   # Cycle through each possible T1 position.

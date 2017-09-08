@@ -77,7 +77,7 @@ likelihood_mixture <- function(x,p,mu,sigma,minSPE,maxSPE,guessingDistribution) 
   #by integrating the area under the curve for the bin domain.
   #E.g., for an SPE of 0, from -.5 to +.5  . See goodbournMatlabLikelihoodVersusR.png for a picture
   gaussianComponentProbs<- areaUnderGaussianBinEachObservationTapered(x,mu,sigma,guessingDistribution,minSPE,maxSPE)
-
+  gaussianComponentProbs<- unlist(gaussianComponentProbs) #ended up as list rather than vector with Cheryl's data
   #Now we have the probability of each observation, except they're not really probabilities
   #because the density they were based on doesn't sum to 1 because it wasn't a Gaussian
   #truncated to the domain of possible events. Plus it was tapered by the guessingDistribution

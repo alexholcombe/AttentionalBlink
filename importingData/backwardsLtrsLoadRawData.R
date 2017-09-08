@@ -7,6 +7,7 @@ GoogleDrivePath<-"Google\ Drive/Backwards\ paper"
 rawDataPath<- file.path("~",GoogleDrivePath,
                             "secondPaper/E1/Data/RawData/Data")
 #raw data path containing .mat file for each subject
+rawDataExcludedByMATLABpath<- file.path(rawDataPath, "Excluded")
 
 pathNeeded<- "importingData"
 source(file.path(pathNeeded,"turnMATintoMeltedDataframe.R"))

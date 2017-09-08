@@ -47,9 +47,9 @@ Here are the estimates from one run for the one data sample:
 print(estimates)
 ```
 
-Calculate the standard deviation of the fits for just one sample of data. The variation is remarkably low.
+Calculate the standard deviation of the fits for just one sample of data. The variation is remarkably low, except for precision?
 
-```{r sd of fits, echo=FALSE, message=FALSE}
+```{r sd of fits, echo=FALSE, message=FALSE, cache=TRUE}
 
 #For each condition, do the fit many times and calculate the standard deviation
 #Maybe repeat the raw data dataframe as many times as want to fit. Then group by *replicate* and so get
@@ -69,27 +69,29 @@ estimates<- estimates %>% rename(efficacy = p1, latency = p2, precision = p3)
 
 #it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
 estimates<-data.frame(estimates)
-
+roundMean<- function(x) { round(mean(x),2) } #round the means so not so long to read
 w<-estimates %>%  summarise_at( .vars = c("efficacy", "latency","precision"),
-                                .funs = c(Mean="mean", Sd="sd") )
+                                .funs = c(Mean="roundMean", Sd="sd") )
 print(w)
 
 ```
 
 
-Do it for each of many conditions to make sure it is true for each condition. Here is the variation for each condition:
+Do it for each of many conditions to make sure it is true for each condition. The variation for each condition is:
 
 ```{r many conditions, echo=FALSE, message=FALSE}
 
 #dg<-filter(df, subject<"AC")
 
 reps<-30
-#replicate raw data
-dn<- dg[rep(1:nrow(dg),times = reps), ]
+#replicate raw data, creating reps copies of each condition*subject*
+dn<- df[rep(1:nrow(df),times = reps), ]
 #add a rep field indicating replicate number
 dn$replicate <- rep(1:reps, each=nrow(dg))
 
-numReplicates<-1 #Only fit the model once because we are manipulating number of fits with reps
+numReplicates<-1 #Only fit the model once per function call because we are manipulating number of fits with reps
+###########
+#Fit the data, which could take a very long time
 many<-dn %>% group_by(replicate,subject,target,condition) %>% 
   do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
 
@@ -98,11 +100,35 @@ many<-data.frame(many)
 many<- many %>% rename(efficacy = p1, latency = p2, precision = p3)
 
 w<-many %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
-                                .funs = c(Mean="mean", Sd="sd") )
+                                .funs = c(Mean="roundMean", Sd="sd") )
 #it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
 w<-data.frame(w)
 
-print( select(w, -ends_with("Mean")) ) #Don't print the mean as then can't see important stuff in single line
+print( select(w, -ends_with("Mean")) ) #Don't print the means as then can't see important stuff in single line
+```
+
+The mean sds are:
+```{r mean sds, echo=FALSE, message=FALSE}
+
+averageSD<- w %>% select(-ends_with("Mean")) %>% summarise_at( .vars = c("efficacy_Sd", "latency_Sd","precision_Sd"),
+                                .funs = c(Mean="mean") )
+
+print(averageSD)
+```
+You'll notice they are large for latency and precision. If results of fits were normally distributed, standard error when `r sampleSizes<-c(5,10,20,50)` 5, 10, 20, and 50 fits are done would be:
+
+```{r mean sds, echo=FALSE, message=FALSE}
+sampleSizes<-c(5,10,20,50)
+SEnormalCalc<- averageSD[rep(1:nrow(averageSD),times = length(sampleSizes)), ]
+SEnormalCalc$sampleSize <- sampleSizes
+SEnormalCalc<-SEnormalCalc %>% mutate_each(funs(SE = ./sqrt(sampleSize)), -sampleSize)
+SEnormalCalc[,4:7]
+```
+
+Examine the empirical SE by looking at the SD of the SD, taking different numbers of repetitions.
+
+```{r empirical SE, echo=FALSE, message=FALSE}
+
 ```
 
 Check whether there is any condition with high variation - standard deviation greater than .05

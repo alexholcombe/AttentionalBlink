@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 .Rapp.history
+.compareMATLABtoR_cache/
+.compareMATLABtoR_files/
