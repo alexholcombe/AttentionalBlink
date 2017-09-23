@@ -1,7 +1,7 @@
 ---
 title: "effect of number of fits"
 author: "Alex Holcombe"
-date: "9/6/2017"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document
 ---
 
@@ -83,11 +83,11 @@ Do it for each of many conditions to make sure it is true for each condition. Th
 
 #dg<-filter(df, subject<"AC")
 
-reps<-30
+reps<-100
 #replicate raw data, creating reps copies of each condition*subject*
 dn<- df[rep(1:nrow(df),times = reps), ]
 #add a rep field indicating replicate number
-dn$replicate <- rep(1:reps, each=nrow(dg))
+dn$replicate <- rep(1:reps, each=nrow(df))
 
 numReplicates<-1 #Only fit the model once per function call because we are manipulating number of fits with reps
 ###########
@@ -99,6 +99,7 @@ many<-dn %>% group_by(replicate,subject,target,condition) %>%
 many<-data.frame(many)
 many<- many %>% rename(efficacy = p1, latency = p2, precision = p3)
 
+#Calculate the mean and SD across all the replicates
 w<-many %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
                                 .funs = c(Mean="roundMean", Sd="sd") )
 #it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
@@ -125,10 +126,70 @@ SEnormalCalc<-SEnormalCalc %>% mutate_each(funs(SE = ./sqrt(sampleSize)), -sampl
 SEnormalCalc[,4:7]
 ```
 
-Examine the empirical SE by looking at the SD of the SD, taking different numbers of repetitions.
+Examine the empirical SE by looking at the SD of the mean for different numbers of fits.
+
+In other words for each `n` up to `reps`, take random samples of n from the replicates and
+calculate the mean. We want to know the sd of the sampling distribution of that mean (the expected se). So we repeat the sampling many times and calculate the mean each time, and the sd of all those means.
+
+Do it separately for each condition and then average the SEs of the conditions.
+
 
 ```{r empirical SE, echo=FALSE, message=FALSE}
 
+#calculate the sd for those 
+dfThis<-many
+
+these<- filter(dfThis, replicate == whichFits) #grab those particular fits
+#Calculate means with these fits
+meanThese<- these %>% group_by(subject,target,condition) %>%
+          summarise_at( .vars = c("efficacy", "latency","precision"),  .funs = c(Mean="mean") )
+#Accumulate
+
+summarise_at( .vars = c("efficacy_Sd", "latency_Sd","precision_Sd"),
+                                .funs = c(Mean="mean") )
+
+bunchOfFitsMean<- function(df,numFitsForMean) {
+  #Take a random subset of the fits
+  whichFits<- sample(seq(1:reps), numFitsForMean, replace = TRUE)
+  these<- filter(df, replicate == whichFits) #grab those particular fits
+  #Calculate the mean fit
+  meanThese<- these %>% group_by(subject,target,condition) %>%
+          summarise_at( .vars = c("efficacy", "latency","precision"),  .funs = c(Mean="mean") )
+  return(meanThese)
+}
+
+bootstrapFitSE<- function(dg,numFitsForMean, bootstrapSamples) {
+  allTheFits<- data.frame()
+  for (sampleI in 1:bootstrapSamples) {
+    
+    oneBunchOfFits<- bunchOfFitsMean(dg,numFitsForMean)
+    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
+  }
+  SEs<- allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
+                                .funs = c(SE="sd") )
+  return(SEs)
+}
+#IS SE consistently going down but very little?
+
+bootstrapSampleN<-20
+numFitsForMean=2
+x<-bootstrapFitSE(dfThis, numFitsForMean, bootstrapSampleN)
+
+for (sampleSize in seq(1:reps/2)) {
+  allTheFits<- data.frame()
+  for (sampleI in 1:bootstrapSamples) {
+    
+    oneBunchOfFits<- bunchOfFitsMean(dfThis,2)
+    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
+  }
+  allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
+                                .funs = c(SE="sd") )
+
+
+ #For each samplesize, bootstrap the SE 
+  
+#many<-dn %>% group_by(replicate,subject,target,condition) %>% 
+#  do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
 ```
 
 Check whether there is any condition with high variation - standard deviation greater than .05

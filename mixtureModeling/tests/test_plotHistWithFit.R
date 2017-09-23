@@ -87,7 +87,6 @@ df<- data %>% dplyr::filter(subject=="BO" & stream=="Left" & orientation=="Canon
 g<- plotHistWithFit(df,minSPE,maxSPE,df$targetSP,numItemsInStream,plotContinuousGaussian)
 show(g) #How did BO do it? Never guessed, almost, only twice
 
-ll<- fitAndPlotHist(df,minSPE,maxSPE,numItemsInStream)
 #Get Error in eigen(nhatend) : infinite or missing values in 'x'
 # which optimx's author says might be fine:
 #http://r.789695.n4.nabble.com/Error-in-eigen-nhatend-td4708274.html

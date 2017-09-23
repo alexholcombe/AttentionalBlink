@@ -6,6 +6,7 @@ if (basename(getwd()) != "tests") {
 } else { 
   pathNeeded <- ".." 
 }
+print(getwd())
 source( file.path(pathNeeded, "createGuessingDistribution.R") )
 source( file.path(pathNeeded, "parameterBounds.R") )
 source(file.path(pathNeeded,"theme_apa.R"))

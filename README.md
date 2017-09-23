@@ -14,8 +14,14 @@ Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MAT
 ## Issues
 
 Learn how to catch errors that seem uncatchable, like
-*  Still having trouble capturing error msgs like "Error in eigen(nhatend) : infinite or missing values in 'x'"
+*  Still having trouble capturing error msgs like "Error in eigen(nhatend) : infinite or missing values in 'x'". which optimx's author [says might be fine](
+http://r.789695.n4.nabble.com/Error-in-eigen-nhatend-td4708274.html)
+
 * Error in grad.default(ufn, ans$par, ...) :
+
+* This prevents compatibility with separate local repo setting path into mixture modeling:  Need to adjust path because Testthat might not work because path gets set to mixtureModeling/tests/
+Best thing to do is figure out how to avoid testthat needing that. I guess could call testthat from elsewhere?
+But that won't be sufficient to solve the problem, because can't source things still without having the path to mixture modeling which local file can't know about.
 
 Someday switch to Bayesian  Stan via brms. See "mixture" function in [brms manual](https://cran.r-project.org/web/packages/brms/brms.pdf) and [this post](http://andrewgelman.com/2017/08/21/mixture-models-stan-can-use-log_mix/) by Gelman on mixture models in stan
 
