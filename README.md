@@ -3,6 +3,8 @@ Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MAT
 
 ### To-do
 
+- For BackwardsLtrsPaper2, work out how to get the directories right when it calls 'analyzeOneCondition.R' and tries to find the mixtureModeling directory from there
+
             % Test for a significant difference in log likelihoods
             [h,pValue,stat,cValue] = lratiotest(-minNegLogLikelihood,-uniformNegLogLikelihood,nFreeParameters,pCrit);
         
