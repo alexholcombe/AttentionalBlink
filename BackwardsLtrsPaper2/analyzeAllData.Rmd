@@ -17,10 +17,9 @@ Import data
 
 fileWithPath<- file.path('..','data','P2E2_PilotData.Rdata') 
 if (file.exists(fileWithPath)) {
-  
   dg<- readRDS( fileWithPath ) #.mat file been preprocessed into melted long dataframe
 } else {
-  print("Error! Could not find file. Probably your working directory is bad:")
+  print(cat("Error! Could not find file",fileWithPath," Probably your working directory is bad:"))
   print(getwd())
 }
 
