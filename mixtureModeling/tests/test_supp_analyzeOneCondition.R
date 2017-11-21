@@ -1,4 +1,4 @@
-# test of fitModel intended to be used with the testthat package
+# additional tests of fitModel intended to be used with the testthat package
 
 #To testthat, run test_file("mixtureModeling/tests/test_fitModel.r")
 #Compensate for path getting set to mixtureModeling/tests/
@@ -19,7 +19,7 @@ test_that("Fits entire experiment worth of data fine", {
   data$letterSeq<- NULL
 
   estimates<-data %>% group_by(subject,target,condition) %>% 
-              do(analyzeOneCondition(.,numItemsInStream))
+              do(analyzeOneCondition(.,numItemsInStream,parameterBounds()))
 
   #round numeric columns so easier to view
   data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 
@@ -41,7 +41,7 @@ test_that("Handles terrible subjects", {
   data$letterSeq<- NULL
   
   estimates<-data %>% group_by(subject,target,condition) %>% 
-    do(analyzeOneCondition(.,numItemsInStream))
+    do(analyzeOneCondition(.,numItemsInStream,parameterBounds()))
   
   #round numeric columns so easier to view
   data.frame(lapply(estimates, function(y) if(is.numeric(y)) round(y, 2) else y)) 

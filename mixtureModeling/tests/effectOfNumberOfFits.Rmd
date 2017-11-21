@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Import data
+Import some data as a test case - backwards paper 2, E1
 
 ```{r importData, echo=FALSE, message=FALSE}
 #rm(list=ls())
@@ -30,7 +30,7 @@ data<- readRDS( file.path(pathNeeded,"tests", "alexImportBackwardsPaper2E1.Rdata
 library(dplyr)
 numItemsInStream<- length( data$letterSeq[1,] )  
 df<-data
-#It seems that to work with dplyr, can't have array field like letterSeq
+#to work with dplyr, can't have array field like letterSeq
 df$letterSeq<- NULL
 dg<- dplyr::filter(df,subject=="AA",condition==1,target==1)  #subject < "AC") #Otherwise will take long time to run the preliminary examples 
 
@@ -47,7 +47,7 @@ Here are the estimates from one run for the one data sample:
 print(estimates)
 ```
 
-Calculate the standard deviation of the fits for just one sample of data. The variation is remarkably low, except for precision?
+Calculate the standard deviation of the fits for just one sample of data. 
 
 ```{r sd of fits, echo=FALSE, message=FALSE, cache=TRUE}
 
@@ -76,10 +76,11 @@ print(w)
 
 ```
 
+The variation is remarkably low, except for precision?
 
 Do it for each of many conditions to make sure it is true for each condition. The variation for each condition is:
 
-```{r many conditions, echo=FALSE, message=FALSE}
+```{r many conditions, echo=FALSE, message=FALSE, cache=TRUE}
 
 #dg<-filter(df, subject<"AC")
 
@@ -126,7 +127,9 @@ SEnormalCalc<-SEnormalCalc %>% mutate_each(funs(SE = ./sqrt(sampleSize)), -sampl
 SEnormalCalc[,4:7]
 ```
 
-Examine the empirical SE by looking at the SD of the mean for different numbers of fits.
+On this assumption of normal distribution of repeated fits, SE will go below .1 in all cases when do 10 replicates. But probably not normally distributed. Therefore,
+
+determine the empirical SE by looking at the SD of the mean for different numbers of fits.
 
 In other words for each `n` up to `reps`, take random samples of n from the replicates and
 calculate the mean. We want to know the sd of the sampling distribution of that mean (the expected se). So we repeat the sampling many times and calculate the mean each time, and the sd of all those means.

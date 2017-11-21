@@ -9,7 +9,6 @@ if (basename(getwd()) != "tests") { #directory of this file, which should be mix
 source( file.path(pathNeeded,"createGuessingDistribution.R")  )
 source( file.path(pathNeeded,"fitModel.R") )
 
-
 source( file.path(pathNeeded,"parametersGuess.R") )
 
 analyzeOneCondition<- function(df, numItemsInStream, paramBounds, nReplicates=3) {
