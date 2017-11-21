@@ -119,7 +119,7 @@ print(averageSD)
 ```
 You'll notice they are large for latency and precision. If results of fits were normally distributed, standard error when `r sampleSizes<-c(5,10,20,50)` 5, 10, 20, and 50 fits are done would be:
 
-```{r mean sds, echo=FALSE, message=FALSE}
+```{r assume normality, echo=FALSE, message=FALSE}
 sampleSizes<-c(5,10,20,50)
 SEnormalCalc<- averageSD[rep(1:nrow(averageSD),times = length(sampleSizes)), ]
 SEnormalCalc$sampleSize <- sampleSizes

@@ -1,5 +1,5 @@
 
-Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MATLAB. [Certifiedwaif](https://github.com/certifiedwaif/) [ported](https://github.com/certifiedwaif/AttentionalBlink) it to R.
+Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MATLAB. [Certifiedwaif](https://github.com/certifiedwaif/) did initial [port](https://github.com/certifiedwaif/AttentionalBlink) it to R, and then Alex functionfied and improved everything.
 
 ### To-do
 
@@ -9,7 +9,7 @@ Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MAT
             [h,pValue,stat,cValue] = lratiotest(-minNegLogLikelihood,-uniformNegLogLikelihood,nFreeParameters,pCrit);
         
 - Instead of using parameterBounds.R, should probably create a list of everything specific to a particular experiment/implementation, a bit like optim has a list of parameters.
-- Look at variation in fit across fits so know how many different starting points I need.
+- Look at variation in fit across fits so know how many different starting points I need. That's the effectOfNumberOfFits.Rmd file, but I still need to do the empirical SE calculation.
 - Why is the blue continuous Gaussian in AA right canonical MATLAB not intersect the light blue discretised Gaussian in the bin middles.
  
         
@@ -20,6 +20,14 @@ Learn how to catch errors that seem uncatchable, like
 http://r.789695.n4.nabble.com/Error-in-eigen-nhatend-td4708274.html)
 
 * Error in grad.default(ufn, ans$par, ...) :
+
+For similar error, JC Nash [says](
+http://r.789695.n4.nabble.com/Re-optim-bbmle-function-returns-NA-at-td4673616.html) to  find a way to make sure 
+your likelihood is properly defined. This seems to be the issue for 
+about 90% of failures with optim(x) or other ML methods in my recent 
+experience. Note that returning a large value (and make it a good deal 
+smaller than the .Machine$double.xmax, say that number *1e-6 to avoid 
+computation troubles) often works, but it is a quick and dirty fix. 
 
 * This prevents compatibility with separate local repo setting path into mixture modeling:  Need to adjust path because Testthat might not work because path gets set to mixtureModeling/tests/
 Best thing to do is figure out how to avoid testthat needing that. I guess could call testthat from elsewhere?
