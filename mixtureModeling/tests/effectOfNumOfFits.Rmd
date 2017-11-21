@@ -86,33 +86,36 @@ Do it for each of many conditions to make sure it is true for each condition. Th
 
 reps<-100
 #replicate raw data, creating reps copies of each condition*subject*
-dn<- df[rep(1:nrow(df),times = reps), ]
+dWithManyDuplicatns<- df[rep(1:nrow(df),times = reps), ]
 #add a rep field indicating replicate number
-dn$replicate <- rep(1:reps, each=nrow(df))
+dWithManyDuplicatns$replicate <- rep(1:reps, each=nrow(df))
+#save(dWithManyDuplicatns, file = "effectOfNumOfFits.RData")
 
+  
 numReplicates<-1 #Only fit the model once per function call because we are manipulating number of fits with reps
 ###########
-#Fit the data, which could take a very long time
-many<-dn %>% group_by(replicate,subject,target,condition) %>% 
+#Fit the data, which could take a very long time, because for each condition there are reps duplications
+manyFits<-dWithManyDuplicatns %>% group_by(replicate,subject,target,condition) %>% 
   do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
 
-#it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
-many<-data.frame(many)
-many<- many %>% rename(efficacy = p1, latency = p2, precision = p3)
-
+#do automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
+manyFits<-data.frame(manyFits)
+manyFits<- manyFits %>% rename(efficacy = p1, latency = p2, precision = p3)
+save(manyFits,file="manyFits.Rdata") #So can be used by Part2 to sample different subsets to get a sense of SD of mean for different subset sizes
+  
 #Calculate the mean and SD across all the replicates
-w<-many %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
+manyMeanSD<-manyResults %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
                                 .funs = c(Mean="roundMean", Sd="sd") )
 #it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
-w<-data.frame(w)
+manyMeanSD<-data.frame(manyMeanSD)
 
-print( select(w, -ends_with("Mean")) ) #Don't print the means as then can't see important stuff in single line
+print( select(manyMeanSD, -ends_with("Mean")) ) #Don't print the means as then can't see important stuff in single line
 ```
 
 The mean sds are:
 ```{r mean sds, echo=FALSE, message=FALSE}
 
-averageSD<- w %>% select(-ends_with("Mean")) %>% summarise_at( .vars = c("efficacy_Sd", "latency_Sd","precision_Sd"),
+averageSD<- manyMeanSD %>% select(-ends_with("Mean")) %>% summarise_at( .vars = c("efficacy_Sd", "latency_Sd","precision_Sd"),
                                 .funs = c(Mean="mean") )
 
 print(averageSD)
@@ -127,7 +130,7 @@ SEnormalCalc<-SEnormalCalc %>% mutate_each(funs(SE = ./sqrt(sampleSize)), -sampl
 SEnormalCalc[,4:7]
 ```
 
-On this assumption of normal distribution of repeated fits, SE will go below .1 in all cases when do 10 replicates. But probably not normally distributed. Therefore,
+On this assumption of normal distribution of repeated fits, SE will go below .1 in all cases when do 10 replicates. But probably not normally distributed. Therefore, *in Part2.Rmd*,
 
 determine the empirical SE by looking at the SD of the mean for different numbers of fits.
 
@@ -135,69 +138,3 @@ In other words for each `n` up to `reps`, take random samples of n from the repl
 calculate the mean. We want to know the sd of the sampling distribution of that mean (the expected se). So we repeat the sampling many times and calculate the mean each time, and the sd of all those means.
 
 Do it separately for each condition and then average the SEs of the conditions.
-
-
-```{r empirical SE, echo=FALSE, message=FALSE}
-
-#calculate the sd for those 
-dfThis<-many
-
-these<- filter(dfThis, replicate == whichFits) #grab those particular fits
-#Calculate means with these fits
-meanThese<- these %>% group_by(subject,target,condition) %>%
-          summarise_at( .vars = c("efficacy", "latency","precision"),  .funs = c(Mean="mean") )
-#Accumulate
-
-summarise_at( .vars = c("efficacy_Sd", "latency_Sd","precision_Sd"),
-                                .funs = c(Mean="mean") )
-
-bunchOfFitsMean<- function(df,numFitsForMean) {
-  #Take a random subset of the fits
-  whichFits<- sample(seq(1:reps), numFitsForMean, replace = TRUE)
-  these<- filter(df, replicate == whichFits) #grab those particular fits
-  #Calculate the mean fit
-  meanThese<- these %>% group_by(subject,target,condition) %>%
-          summarise_at( .vars = c("efficacy", "latency","precision"),  .funs = c(Mean="mean") )
-  return(meanThese)
-}
-
-bootstrapFitSE<- function(dg,numFitsForMean, bootstrapSamples) {
-  allTheFits<- data.frame()
-  for (sampleI in 1:bootstrapSamples) {
-    
-    oneBunchOfFits<- bunchOfFitsMean(dg,numFitsForMean)
-    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
-  }
-  SEs<- allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
-                                .funs = c(SE="sd") )
-  return(SEs)
-}
-#IS SE consistently going down but very little?
-
-bootstrapSampleN<-20
-numFitsForMean=2
-x<-bootstrapFitSE(dfThis, numFitsForMean, bootstrapSampleN)
-
-for (sampleSize in seq(1:reps/2)) {
-  allTheFits<- data.frame()
-  for (sampleI in 1:bootstrapSamples) {
-    
-    oneBunchOfFits<- bunchOfFitsMean(dfThis,2)
-    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
-  }
-  allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
-                                .funs = c(SE="sd") )
-
-
- #For each samplesize, bootstrap the SE 
-  
-#many<-dn %>% group_by(replicate,subject,target,condition) %>% 
-#  do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
-```
-
-Check whether there is any condition with high variation - standard deviation greater than .05
-
-```{r bad conditions, echo=FALSE, message=FALSE}
-filter_at( w, vars(ends_with("Sd")), any_vars(. > .05) )
-
-```
