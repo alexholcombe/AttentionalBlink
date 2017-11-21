@@ -5,7 +5,7 @@ if (basename(getwd()) != "tests") { #directory of this file, which should be mix
   pathNeeded <- ".." 
 }
 library(dplyr)
-
+require(ggplot2)
 source( file.path(pathNeeded,"theme_apa.R")  )
 source( file.path(pathNeeded,"calcCurvesDataframes.R")  )
 
