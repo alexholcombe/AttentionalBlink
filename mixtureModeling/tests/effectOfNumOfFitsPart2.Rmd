@@ -1,0 +1,117 @@
+---
+title: "effect of number of fits"
+author: "Alex Holcombe"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Import data as a test case - backwards paper 2, E1
+
+```{r importData, echo=FALSE, message=FALSE}
+#rm(list=ls())
+
+#Compensate for path getting set to mixtureModeling/tests/
+if (basename(getwd()) != "tests") {
+  pathNeeded<- "mixtureModeling"
+} else { 
+  pathNeeded <- ".." 
+}
+
+data<- readRDS( file.path(pathNeeded,"tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
+```
+
+Format the data. Create an enormous data frame where each condition has been replicated 100 times.
+
+```{r formatData, echo=FALSE, message=FALSE}
+
+library(dplyr)
+numItemsInStream<- length( data$letterSeq[1,] )  
+df<-data
+#to work with dplyr, can't have array field like letterSeq
+df$letterSeq<- NULL
+dg<-df
+#dg<- dplyr::filter(df,subject=="AA",condition==1,target==1)  #subject < "AC") #Otherwise will take long time to run the preliminary examples 
+
+source(file.path(pathNeeded,"analyzeOneCondition.R"))
+source(file.path(pathNeeded,"parameterBounds.R"))
+
+reps<-100
+#replicate raw data, creating reps copies of each condition*subject*
+dWithManyDuplicatns<- dg[rep(1:nrow(dg),times = reps), ]
+#add a rep field indicating replicate number
+dWithManyDuplicatns$replicate <- rep(1:reps, each=nrow(df))
+
+```
+
+
+Determine the empirical SD of the mean of `n` fits by looking at the SD of the mean for different `n`s of fits.
+
+In other words for each `n` up to `reps`, take random samples of n from the replicates and
+calculate the mean. We want to know the sd of the sampling distribution of that mean (the expected se). So we repeat the sampling many times and calculate the mean each time, and the sd of all those means.
+
+Do it separately for each condition and then average the SEs of the conditions.
+
+
+```{r empirical SE, echo=FALSE, message=FALSE}
+
+#calculate the sd for those 
+d<-dWithManyDuplicatns 
+
+bunchOfFitsMean<- function(df,numFitsForMean) {
+  #Take a random subset of the fits
+  whichFits<- sample(seq(1:reps), numFitsForMean, replace = TRUE)
+  these<- filter(d, replicate == whichFits) #grab those particular fits
+  #Calculate the mean fit
+  meanThese<- these %>% group_by(subject,target,condition) %>%
+          summarise_at( .vars = c("efficacy", "latency","precision"),  .funs = c(Mean="mean") )
+  return(meanThese)
+}
+
+
+bootstrapFitSE<- function(dg,numFitsForMean, bootstrapSamples) {
+  # bootstrapSamples times, fit the data numFitsForMean times and take the mean, to reveal
+  #  variation in average when using numFitsForMean for the average
+  allTheFits<- data.frame()
+  for (sampleI in 1:bootstrapSamples) {
+    
+    oneBunchOfFits<- bunchOfFitsMean(dg,numFitsForMean)
+    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
+  }
+  SEs<- allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
+                                .funs = c(SE="sd") )
+  return(SEs)
+}
+#IS SE consistently going down but very little?
+
+bootstrapSampleN<-20
+numFitsForMean=2
+x<-bootstrapFitSE(dfThis, numFitsForMean, bootstrapSampleN)
+
+for (sampleSize in seq(1:reps/2)) {
+  allTheFits<- data.frame()
+  for (sampleI in 1:bootstrapSamples) {
+    
+    oneBunchOfFits<- bunchOfFitsMean(dfThis,2)
+    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
+  }
+  allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
+                                .funs = c(SE="sd") )
+
+
+ #For each samplesize, bootstrap the SE 
+  
+#many<-dn %>% group_by(replicate,subject,target,condition) %>% 
+#  do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
+```
+
+Check whether there is any condition with high variation - standard deviation greater than .05
+
+```{r bad conditions, echo=FALSE, message=FALSE}
+filter_at( w, vars(ends_with("Sd")), any_vars(. > .05) )
+
+```
