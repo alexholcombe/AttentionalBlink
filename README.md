@@ -11,7 +11,14 @@ Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MAT
 - Instead of using parameterBounds.R, should probably create a list of everything specific to a particular experiment/implementation, a bit like optim has a list of parameters.
 - Look at variation in fit across fits so know how many different starting points I need. That's the effectOfNumberOfFits.Rmd file, but I still need to do the empirical SE calculation.
 - Why is the blue continuous Gaussian in AA right canonical MATLAB not intersect the light blue discretised Gaussian in the bin middles.
- 
+
+### Data to analyze
+
+- Callum
+
+- Jackie
+
+
         
 ## Issues
 

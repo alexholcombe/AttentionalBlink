@@ -78,7 +78,10 @@ print(w)
 
 The variation is remarkably low, except for precision?
 
-Do it for each of many conditions to make sure it is true for each condition. The variation for each condition is:
+Do it for each of many conditions to make sure it is true for each condition. 
+For this part, doing 100 reps (fits) for each condition will take about an hour.
+
+The variation for each condition is below. You'll note there's a lot of variance. That is, some subject*conditions have a high standard deviation.
 
 ```{r many conditions, echo=FALSE, message=FALSE, cache=TRUE}
 
@@ -91,8 +94,7 @@ dWithManyDuplicatns<- df[rep(1:nrow(df),times = reps), ]
 dWithManyDuplicatns$replicate <- rep(1:reps, each=nrow(df))
 #save(dWithManyDuplicatns, file = "effectOfNumOfFits.RData")
 
-  
-numReplicates<-1 #Only fit the model once per function call because we are manipulating number of fits with reps
+numReplicates<-1 #Only fit the model once per function call because we are manipulating number of fits with reps, not numReplicates
 ###########
 #Fit the data, which could take a very long time, because for each condition there are reps duplications
 manyFits<-dWithManyDuplicatns %>% group_by(replicate,subject,target,condition) %>% 
@@ -101,18 +103,20 @@ manyFits<-dWithManyDuplicatns %>% group_by(replicate,subject,target,condition) %
 #do automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
 manyFits<-data.frame(manyFits)
 manyFits<- manyFits %>% rename(efficacy = p1, latency = p2, precision = p3)
-save(manyFits,file="manyFits.Rdata") #So can be used by Part2 to sample different subsets to get a sense of SD of mean for different subset sizes
+save(manyFits,file=file.path(pathNeeded,"tests","manyFits.Rdata")) #So can be used by Part2 to sample different subsets to get a sense of SD of mean for different subset sizes
   
 #Calculate the mean and SD across all the replicates
-manyMeanSD<-manyResults %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
+manyMeanSD<-manyFits %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
                                 .funs = c(Mean="roundMean", Sd="sd") )
 #it automatically groups it using the tibble group specified variable, so get rid of that by changing to dataframe
 manyMeanSD<-data.frame(manyMeanSD)
 
-print( select(manyMeanSD, -ends_with("Mean")) ) #Don't print the means as then can't see important stuff in single line
+dropMeans<- select(manyMeanSD, -ends_with("_mean"))  #Don't print the means as then can't see important stuff in single line
+easyToReadSDs<- data.frame(lapply(dropMeans, function(y) if(is.numeric(y)) round(y, 2) else y)) #round numeric columns
+print(easyToReadSDs) #SD for each condition
 ```
 
-The mean sds are:
+The mean sds across conditions are:
 ```{r mean sds, echo=FALSE, message=FALSE}
 
 averageSD<- manyMeanSD %>% select(-ends_with("Mean")) %>% summarise_at( .vars = c("efficacy_Sd", "latency_Sd","precision_Sd"),
@@ -120,7 +124,19 @@ averageSD<- manyMeanSD %>% select(-ends_with("Mean")) %>% summarise_at( .vars = 
 
 print(averageSD)
 ```
-You'll notice they are large for latency and precision. If results of fits were normally distributed, standard error when `r sampleSizes<-c(5,10,20,50)` 5, 10, 20, and 50 fits are done would be:
+
+To look into the discrepancy, check just the one subject-condition that had low variability.
+
+```{r discrepancy, echo=FALSE, message=FALSE}
+
+oneMeanSD<-manyFits %>% dplyr::filter(subject=="AA",condition==1,target==1) %>% summarise_at( .vars = c("efficacy", "latency","precision"),
+                                .funs = c(Mean="roundMean", Sd="sd") )
+print(oneMeanSD)
+```
+
+No discrepancy, so apparently it's just the one subject.
+
+You'll notice the means across conditions are large for latency and precision. If results of fits were normally distributed, standard error when `r sampleSizes<-c(5,10,20,50)` 5, 10, 20, and 50 fits are done would be:
 
 ```{r assume normality, echo=FALSE, message=FALSE}
 sampleSizes<-c(5,10,20,50)
@@ -130,7 +146,7 @@ SEnormalCalc<-SEnormalCalc %>% mutate_each(funs(SE = ./sqrt(sampleSize)), -sampl
 SEnormalCalc[,4:7]
 ```
 
-On this assumption of normal distribution of repeated fits, SE will go below .1 in all cases when do 10 replicates. But probably not normally distributed. Therefore, *in Part2.Rmd*,
+On this assumption of normal distribution of repeated fits, SE will go below .1 in all cases when do 20 replicates. But probably not normally distributed. Therefore, *in Part2.Rmd*,
 
 determine the empirical SE by looking at the SD of the mean for different numbers of fits.
 
@@ -138,3 +154,21 @@ In other words for each `n` up to `reps`, take random samples of n from the repl
 calculate the mean. We want to know the sd of the sampling distribution of that mean (the expected se). So we repeat the sampling many times and calculate the mean each time, and the sd of all those means.
 
 Do it separately for each condition and then average the SEs of the conditions.
+
+# Digression: weird Ss investigate
+
+Subject AI, target=1,condition=2 has ridiculuous variance in latency (1.96) and precision (1.93) also for target=2, condition=1.  Plot below shows he has a second hill, which presumably is sometimes getting fit instead of the hill near SPE=0.
+
+```{r weird Ss1, echo=FALSE, message=FALSE}
+
+dAI<- dplyr::filter(df,subject=="AI",condition==2,target==1)  
+minSPE<- -17; maxSPE<- 17
+plotContinuousGaussian<-TRUE
+source(file.path('..',"plotHistWithFit.R"))
+plotHistWithFit(dAI,minSPE,maxSPE,dAI$targetSP,numItemsInStream,plotContinuousGaussian)
+```
+The other condition also looks multimodal, so very bad Gaussian fit.
+```{r weird Ss2, echo=FALSE, message=FALSE}
+dAI12<- dplyr::filter(df,subject=="AI",condition==1,target==2)  
+plotHistWithFit(dAI12,minSPE,maxSPE,dAI$targetSP,numItemsInStream,plotContinuousGaussian)
+```

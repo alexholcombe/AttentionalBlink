@@ -9,13 +9,14 @@ if (basename(getwd()) != "tests") {
 print(getwd())
 source( file.path(pathNeeded, "createGuessingDistribution.R") )
 source( file.path(pathNeeded, "parameterBounds.R") )
+source(file.path(pathNeeded,"calcCurvesDataFrames.R"))
 source(file.path(pathNeeded,"theme_apa.R"))
 
 
 plotHistWithFit<- function(df,minSPE,maxSPE,targetSP,numItemsInStream,plotContinuousGaussian) {
   #targetSP is needed to construct empirical guessing distribution
   #calculate curves (predicted heights of bins for each component and combination of components
-  curveDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream)
+  curveDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream) #this also does the parameter estimation
 
   if (plotContinuousGaussian) {
     #Calculate continuous fitted Gaussian, not discrete version.
@@ -24,7 +25,6 @@ plotHistWithFit<- function(df,minSPE,maxSPE,targetSP,numItemsInStream,plotContin
     gaussianThis<- gaussianScaledForData(curveDfs$efficacy[1],curveDfs$latency[1],curveDfs$precision[1],
                                          numObservations,minSPE,maxSPE,grain) 
   }
-  
   
   #plot data
   g=ggplot(df, aes(x=SPE)) + theme_apa()

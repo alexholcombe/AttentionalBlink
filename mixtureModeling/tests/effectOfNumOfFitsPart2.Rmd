@@ -9,7 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 Import data as a test case - backwards paper 2, E1
 
 ```{r importData, echo=FALSE, message=FALSE}
@@ -22,32 +21,18 @@ if (basename(getwd()) != "tests") {
   pathNeeded <- ".." 
 }
 
-data<- readRDS( file.path(pathNeeded,"tests", "alexImportBackwardsPaper2E1.Rdata") ) #.mat file been preprocessed into melted long dataframe
-```
+#path<-file.path(pathNeeded,"tests")
+#print(getwd())
+#print(list.files(path))
+path<-'.'
+filename<-file.path(path,"manyFits.Rdata")
+print( file.exists(filename) )
+load(filename, verbose=TRUE) #So can be used by Part2 to sample different subsets to get a sense of SD of mean for different subset sizes
 
-Format the data. Create an enormous data frame where each condition has been replicated 100 times.
-
-```{r formatData, echo=FALSE, message=FALSE}
-
-library(dplyr)
-numItemsInStream<- length( data$letterSeq[1,] )  
-df<-data
-#to work with dplyr, can't have array field like letterSeq
-df$letterSeq<- NULL
-dg<-df
-#dg<- dplyr::filter(df,subject=="AA",condition==1,target==1)  #subject < "AC") #Otherwise will take long time to run the preliminary examples 
-
-source(file.path(pathNeeded,"analyzeOneCondition.R"))
-source(file.path(pathNeeded,"parameterBounds.R"))
-
-reps<-100
-#replicate raw data, creating reps copies of each condition*subject*
-dWithManyDuplicatns<- dg[rep(1:nrow(dg),times = reps), ]
-#add a rep field indicating replicate number
-dWithManyDuplicatns$replicate <- rep(1:reps, each=nrow(df))
 
 ```
 
+manyFits contains results of fitting each condition 100 times.
 
 Determine the empirical SD of the mean of `n` fits by looking at the SD of the mean for different `n`s of fits.
 
@@ -56,42 +41,57 @@ calculate the mean. We want to know the sd of the sampling distribution of that 
 
 Do it separately for each condition and then average the SEs of the conditions.
 
+Define the functions needed first.
 
-```{r empirical SE, echo=FALSE, message=FALSE}
+```{r functions for SE, echo=FALSE, message=FALSE}
 
-#calculate the sd for those 
-d<-dWithManyDuplicatns 
+#Define functions will need 
 
-bunchOfFitsMean<- function(df,numFitsForMean) {
-  #Take a random subset of the fits
+setOfFitsMean<- function(df,reps,numFitsForMean) {
+  #Take a random subset of numFitsForMean fits and calculate the parameters' mean 
   whichFits<- sample(seq(1:reps), numFitsForMean, replace = TRUE)
-  these<- filter(d, replicate == whichFits) #grab those particular fits
-  #Calculate the mean fit
+  these<- filter(df, replicate == whichFits) #grab those particular fits
+  #Calculate the mean fit for each condition for these
   meanThese<- these %>% group_by(subject,target,condition) %>%
           summarise_at( .vars = c("efficacy", "latency","precision"),  .funs = c(Mean="mean") )
-  return(meanThese)
+  return(meanThese) #the mean for each condition
 }
 
-
-bootstrapFitSE<- function(dg,numFitsForMean, bootstrapSamples) {
-  # bootstrapSamples times, fit the data numFitsForMean times and take the mean, to reveal
-  #  variation in average when using numFitsForMean for the average
-  allTheFits<- data.frame()
+bootstrap_FitSE<- function(dg,numFitsForMean, bootstrapSamples) {
+  #Bootstrap the SE from the mean. That is, with replacement take sets of fits, calculate the mean parameter estimate for each, and take the SD of those results, which is the SE of fitting for that setsize.
+  #For a particular numFitsForMean, calculate the mean SD across many (bootstrapSamples) virtual fitting sessions. 
+  #dg contains the result of 100 fits for each condition. A virtual fitting session is a subsample of 
+  # numFitsForMean of those 100.
+  eachSetsMean<- data.frame()
   for (sampleI in 1:bootstrapSamples) {
-    
-    oneBunchOfFits<- bunchOfFitsMean(dg,numFitsForMean)
-    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
+    oneSetOfFitsMean<- setOfFitsMean(dg,numFitsForMean)
+    eachSetsMean<- rbind(eachSetsMean,data.frame(oneSetOfFitsMean))
   }
-  SEs<- allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
+  #Now we have lots of mean fits for each condition. Calculate their SD, which is the SE for this numFitsForMean
+  SE<- eachSetsMean %>% group_by(subject,target,condition) %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
                                 .funs = c(SE="sd") )
-  return(SEs)
+  return(SE)
 }
-#IS SE consistently going down but very little?
 
+```
+
+Try the bootstrap_FitSE once as a test, for sets of 20 fits.
+
+```{r test bootstrap, echo=FALSE, message=FALSE}
 bootstrapSampleN<-20
 numFitsForMean=2
-x<-bootstrapFitSE(dfThis, numFitsForMean, bootstrapSampleN)
+SEeachCondition<- bootstrap_FitSE(manyFits, numFitsForMean, bootstrapSampleN)
+SEeachCondition<- data.frame(SEeachCondition)
+#calculate the mean of SEeachCondition to get the mean SE across conditions
+SE<-SEeachCondition %>% summarise_at( .vars = c("efficacy_Mean_SE", "latency_Mean_SE","precision_Mean_SE"),
+                                .funs = c(m="mean") )
+print(SE)
+```
 
+
+
+
+```{r empiricalSE, echo=FALSE, message=FALSE}
 for (sampleSize in seq(1:reps/2)) {
   allTheFits<- data.frame()
   for (sampleI in 1:bootstrapSamples) {
@@ -107,7 +107,12 @@ for (sampleSize in seq(1:reps/2)) {
   
 #many<-dn %>% group_by(replicate,subject,target,condition) %>% 
 #  do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
+  
+#calculate the sd for those 
+d<-manyFits.Rdata 
+
 ```
+
 
 Check whether there is any condition with high variation - standard deviation greater than .05
 
