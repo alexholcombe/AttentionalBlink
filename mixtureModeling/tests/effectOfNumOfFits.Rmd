@@ -5,6 +5,8 @@ date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document
 ---
 
+I wrote this document to look at variation in parameter estimation across fit attempts, and along the way I found a weird multimodal subject that should be discarded probably. I also looked at how SE of parameter estimation decreased with number of fit attempts, but it may be not at all (unless something's wrong with the code), as seen in Part2. But of more interest is how mean neg log likelihood decreases with number of fits, which I should probably create a separate Rmd doc to study.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -163,12 +165,12 @@ Subject AI, target=1,condition=2 has ridiculuous variance in latency (1.96) and 
 
 dAI<- dplyr::filter(df,subject=="AI",condition==2,target==1)  
 minSPE<- -17; maxSPE<- 17
-plotContinuousGaussian<-TRUE
+plotContinuousGaussian<-FALSE; annotateIt<-TRUE
 source(file.path('..',"plotHistWithFit.R"))
-plotHistWithFit(dAI,minSPE,maxSPE,dAI$targetSP,numItemsInStream,plotContinuousGaussian)
+plotHistWithFit(dAI,minSPE,maxSPE,dAI$targetSP,numItemsInStream,plotContinuousGaussian,annotateIt)
 ```
 The other condition also looks multimodal, so very bad Gaussian fit.
 ```{r weird Ss2, echo=FALSE, message=FALSE}
 dAI12<- dplyr::filter(df,subject=="AI",condition==1,target==2)  
-plotHistWithFit(dAI12,minSPE,maxSPE,dAI$targetSP,numItemsInStream,plotContinuousGaussian)
+plotHistWithFit(dAI12,minSPE,maxSPE,dAI$targetSP,numItemsInStream,plotContinuousGaussian,annotateIt)
 ```

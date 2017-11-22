@@ -63,8 +63,9 @@ bootstrap_FitSE<- function(dg,numFitsForMean, bootstrapSamples) {
   #dg contains the result of 100 fits for each condition. A virtual fitting session is a subsample of 
   # numFitsForMean of those 100.
   eachSetsMean<- data.frame()
+  reps<-max(dg$replicate)
   for (sampleI in 1:bootstrapSamples) {
-    oneSetOfFitsMean<- setOfFitsMean(dg,numFitsForMean)
+    oneSetOfFitsMean<- setOfFitsMean(dg,reps,numFitsForMean)
     eachSetsMean<- rbind(eachSetsMean,data.frame(oneSetOfFitsMean))
   }
   #Now we have lots of mean fits for each condition. Calculate their SD, which is the SE for this numFitsForMean
@@ -75,7 +76,7 @@ bootstrap_FitSE<- function(dg,numFitsForMean, bootstrapSamples) {
 
 ```
 
-Try the bootstrap_FitSE once as a test, for sets of 20 fits.
+Try the bootstrap_FitSE once as a test, for sets of 20 fits, and show just one condition where SE happens to be very small.
 
 ```{r test bootstrap, echo=FALSE, message=FALSE}
 bootstrapSampleN<-20
@@ -85,34 +86,35 @@ SEeachCondition<- data.frame(SEeachCondition)
 #calculate the mean of SEeachCondition to get the mean SE across conditions
 SE<-SEeachCondition %>% summarise_at( .vars = c("efficacy_Mean_SE", "latency_Mean_SE","precision_Mean_SE"),
                                 .funs = c(m="mean") )
-print(SE)
+print(SE) #These look insanely small for only two fits.
+
+#Compare to AA 1 1 that did in part 1
+SEeachCondition %>% dplyr::filter(subject=="AA",condition==1,target==1)
 ```
 
 
 
 
 ```{r empiricalSE, echo=FALSE, message=FALSE}
-for (sampleSize in seq(1:reps/2)) {
-  allTheFits<- data.frame()
-  for (sampleI in 1:bootstrapSamples) {
-    
-    oneBunchOfFits<- bunchOfFitsMean(dfThis,2)
-    allTheFits<- rbind(allTheFits,data.frame(oneBunchOfFits))
-  }
-  allTheFits %>% summarise_at( .vars = c("efficacy_Mean", "latency_Mean","precision_Mean"),
-                                .funs = c(SE="sd") )
+allTheFitSets<- data.frame()
+for (numFitsThis in seq(1,50,5)) {
+  SEeachCondition<- bootstrap_FitSE(manyFits, numFitsThis, bootstrapSampleN)
+  SEeachCondition$nFits<-numFitsThis
+  allTheFitSets<- rbind(allTheFitSets, data.frame(SEeachCondition))
+}
+#"longer object length is not a multiple of shorter object length" is not a problem I don't think, it is generated
+# by the filter(df, replicate == whichFits) command
 
+allTheFitSets<- data.frame(allTheFitSets)
+#calculate the mean of SEeachCondition to get the mean SE across conditions
+SE<-allTheFitSets %>% group_by(nFits) %>% summarise_at( .vars = c("efficacy_Mean_SE", "latency_Mean_SE","precision_Mean_SE"),
+                                .funs = c(m="mean") )
 
- #For each samplesize, bootstrap the SE 
-  
-#many<-dn %>% group_by(replicate,subject,target,condition) %>% 
-#  do( analyzeOneCondition(.,numItemsInStream,parameterBounds(),numReplicates) )
-  
-#calculate the sd for those 
-d<-manyFits.Rdata 
+print(SE)
 
 ```
 
+WOW! It does not go down with nFits, which either means there's something wrong with my code, or that the fits are just too non-independent and heavy-tailed because of pesky multimodal distributions perhaps.
 
 Check whether there is any condition with high variation - standard deviation greater than .05
 

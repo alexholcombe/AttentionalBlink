@@ -13,7 +13,7 @@ source(file.path(pathNeeded,"calcCurvesDataFrames.R"))
 source(file.path(pathNeeded,"theme_apa.R"))
 
 
-plotHistWithFit<- function(df,minSPE,maxSPE,targetSP,numItemsInStream,plotContinuousGaussian) {
+plotHistWithFit<- function(df,minSPE,maxSPE,targetSP,numItemsInStream,plotContinuousGaussian,annotateIt) {
   #targetSP is needed to construct empirical guessing distribution
   #calculate curves (predicted heights of bins for each component and combination of components
   curveDfs<- calcCurvesDataframes(df,minSPE,maxSPE,numItemsInStream) #this also does the parameter estimation
@@ -30,12 +30,20 @@ plotHistWithFit<- function(df,minSPE,maxSPE,targetSP,numItemsInStream,plotContin
   g=ggplot(df, aes(x=SPE)) + theme_apa()
   #plot data
   g<-g+geom_histogram(binwidth=1) + xlim(minSPE,maxSPE)
-  g<-g + geom_line(data=gaussianThis,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
+  if (plotContinuousGaussian) {
+    g<-g + geom_line(data=gaussianThis,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
+  }
   g<-g+ geom_line(data=curveDfs,aes(x=x,y=guessingFreq),color="yellow",size=1.2)
   g<-g+ geom_line(data=curveDfs,aes(x=x,y=gaussianFreq),color="lightblue",size=1.2)
   g<-g+ geom_point(data=curveDfs,aes(x=x,y=combinedFitFreq),color="green",size=1.2)
-  g 
-  
+
+  if (annotateIt) {
+    g<-g + geom_text(data=curveDfs,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")), parse=TRUE,hjust="left") +
+      geom_text(data=curveDfs,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse=TRUE,hjust="left") +
+      geom_text(data=curveDfs,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse=TRUE,hjust="left")+
+      geom_text(data=curveDfs,aes(x=-7,y=22, label = paste("sigma==", round(precision,2), sep = "")), parse=TRUE,hjust="left")
+  }
+  show(g)
   return(g)  
 }
 
