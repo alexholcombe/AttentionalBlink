@@ -83,7 +83,7 @@ plotHistWithFit(dCB,minSPE,maxSPE,dCB$targetSP,numItemsInStream,plotContinuousGa
 ```
 
 
-Plot all data 
+Plot all data. First column is left stream. Second column is right stream. Each subject gets a pair of rows, "1" for upright letters, "2" for backwards letters?
 
 ```{r, echo=FALSE, message=TRUE, fig.height=36, fig.width=10}
 #want fig.height of 10 per subject
@@ -129,7 +129,7 @@ g<-g+ geom_line(data=curves,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 
 numGroups<- length(table(df$condition,df$subject,df$target))
 fontSz = 5 #100/numGroups
-g<-g + geom_text(data=curves,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
+g<-g + geom_text(data=curves,aes(x=-9,y=32, label = paste("--logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
   geom_text(data=curves,aes(x=-7,y=22, label = paste("sigma==", round(precision,2), sep = "")),  parse = TRUE,size=fontSz)
