@@ -33,14 +33,15 @@ numItemsInStream<- length( dg$letterSeq[1,] )
 #It seems that to work with dplyr, can't have array field like letterSeq (letterSeq indicates what each item in the stream of each trial was)
 dg$letterSeq<- NULL
 
+head(dg)
 ```
 
 
-Fit mixture model with R (if fitting not previously done and cached). 
-```{r, echo=TRUE, message=FALSE, cache=TRUE}
+Fit mixture model with R (if fitting not previously done and cached), print first several parameter estimates: 
+```{r, echo=FALSE, message=FALSE, cache=TRUE}
 #Setting cache = TRUE in hopes won't have to recalculate estimates "if cached results exist and this code chunk has not been changed since last run" 
 
-
+library(dplyr)
 #Load files containing the functions needed to fit mixture model to data
 source( file.path(mixModelingPath,'analyzeOneCondition.R') )
 source( file.path(mixModelingPath,'parameterBounds.R') )
@@ -54,7 +55,7 @@ if (!exists("estimates")) {
 }
 
 if (calculate) {
-  estimates<- dg %>%    filter(subject=="CB") %>%
+  estimates<- dg %>%  #  filter(subject=="CB") %>%
     group_by_(.dots = condtnVariableNames) %>%  #.dots needed when you have a variable containing multiple factor names
     do(analyzeOneCondition(.,numItemsInStream,parameterBounds()))
   estimates<- estimates %>% rename(efficacy = p1, latency = p2, precision = p3)
@@ -82,12 +83,13 @@ plotHistWithFit(dCB,minSPE,maxSPE,dCB$targetSP,numItemsInStream,plotContinuousGa
 ```
 
 
+Plot all data 
 
-```{r, echo=FALSE, message=FALSE, fig.height=360, fig.width=10}
+```{r, echo=FALSE, message=TRUE, fig.height=36, fig.width=10}
 #want fig.height of 10 per subject
 
 source( file.path(mixModelingPath,"calcCurvesDataframes.R") )
-
+library(dplyr)
 #create R curves
 df<- dg # %>%  dplyr::filter(subject <="BB") #dplyr::filter(subject <= "BD" & subject >="AP")
 #dplyr::filter(subject=="AA",orientation=="Canonical")
@@ -116,8 +118,9 @@ g<-g+geom_histogram(binwidth=1,color="grey90") + xlim(minSPE,maxSPE)
 g<-g +theme_apa() #+theme(panel.grid.minor=element_blank(),panel.grid.major=element_blank())# hide all gridlines.
 #g<-g+ theme(line=element_blank(), panel.border = element_blank())
 sz=.8
-#Plot the underlying Gaussian , not just the discretized Gaussian
-g<-g + geom_line(data=gaussFine,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
+#Plot the underlying Gaussian , not just the discretized Gaussian. But it's way too tall. I don't know if this is 
+#a scaling problem or what actually is going on.
+#g<-g + geom_line(data=gaussFine,aes(x=x,y=gaussianFreq),color="darkblue",size=1.2)
 
 g<-g+ geom_point(data=curves,aes(x=x,y=combinedFitFreq),color="chartreuse3",size=sz*2.5)
 g<-g+ geom_line(data=curves,aes(x=x,y=guessingFreq),color="yellow",size=sz)
@@ -125,7 +128,7 @@ g<-g+ geom_line(data=curves,aes(x=x,y=guessingFreq),color="yellow",size=sz)
 g<-g+ geom_line(data=curves,aes(x=x,y=gaussianFreq),color="lightblue",size=sz)
 
 numGroups<- length(table(df$condition,df$subject,df$target))
-fontSz = 400/numGroups
+fontSz = 5 #100/numGroups
 g<-g + geom_text(data=curves,aes(x=-9,y=32, label = paste("-logLik==", round(val,1), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves,aes(x=-7,y=28, label = paste("plain(e)==", round(efficacy,2), sep = "")),  parse = TRUE,size=fontSz) +
   geom_text(data=curves,aes(x=-7,y=25, label = paste("mu==", round(latency,2), sep = "")),  parse = TRUE,size=fontSz)+
