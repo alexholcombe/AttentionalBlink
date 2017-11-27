@@ -9,19 +9,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE,  comment = NA)
 ```
 
-Import data
+MATLAB code ran the experiment.
+.mat file been preprocessed into melted long R dataframe by WHAT?
+
+Import data 
 
 ```{r importData, echo=FALSE, message=FALSE}
 #rm(list=ls())
 
-
-fileWithPath<- file.path('..','data','P2E2_PilotData.Rdata') 
-if (file.exists(fileWithPath)) {
-  dg<- readRDS( fileWithPath ) #.mat file been preprocessed into melted long dataframe
+#Import raw data
+rawDataFileWithPath<- file.path('data','P2E2_PilotData.Rdata') 
+if (file.exists(rawDataFileWithPath)) {
+  dg<- readRDS( fileWithPath ) 
 } else {
-  print(cat("Error! Could not find file",fileWithPath," Probably your working directory is bad:"))
+  print(cat("Error! Could not find file",rawDataFileWithPath," Probably your working directory is bad:"))
   print(getwd())
 }
+
+mixModelingPath<- file.path("mixtureModeling")
 
 numItemsInStream<- length( dg$letterSeq[1,] )  
 
