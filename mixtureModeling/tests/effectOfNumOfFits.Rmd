@@ -5,7 +5,7 @@ date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document
 ---
 
-I wrote this document to look at variation in parameter estimation across fit attempts, and along the way I found a weird multimodal subject that should be discarded probably. I also looked at how SE of parameter estimation decreased with number of fit attempts, but it may be not at all (unless something's wrong with the code), as seen in Part2. But of more interest is how mean neg log likelihood decreases with number of fits, which I should probably create a separate Rmd doc to study.
+I wrote this document to look at variation in parameter estimation across fit attempts, and along the way I found a weird multimodal-SPE subject that should be discarded probably. I also looked at how SE of parameter estimation decreased with number of fit attempts, but it may be not at all (unless something's wrong with the code), as seen in Part2. But of more interest is how mean neg log likelihood decreases with number of fits, which I should probably create a separate Rmd doc to study.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
