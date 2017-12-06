@@ -1,5 +1,5 @@
 ---
-title: "paper2 E2"
+title: "analyzeBackwardsPaper2 E2"
 author: "Alex Holcombe"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document

@@ -82,4 +82,3 @@ saveRDS(E, file=paste0(saveDir,"alexImportBackwardsPaper2E1.Rdata"))
 #write.csv(E,paste0(saveDir, "alexImportBackwardsPaper2E1.csv"),row.names=FALSE) #write.csv loses the dimensions
 
 saveRDS(excluded, file=paste0(saveDir,"alexImportBackwardsPaper2E1excludedSs.Rdata"))
-#sanity check the histogram
