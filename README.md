@@ -1,3 +1,4 @@
+THIS REPO HAS BEEN SUPERSEDED BY THE [mixrsvp](https://github.com/alexholcombe/mixRSVP) R package I programmed. However this repo is preserved because it contains the start of analyzing the backwards paper 2 experiments.
 
 Patrick Goodbourn programmed mixture modeling RSVP serial position errors in MATLAB. [Certifiedwaif](https://github.com/certifiedwaif/) did initial [port](https://github.com/certifiedwaif/AttentionalBlink) it to R, and then Alex functionfied and improved everything.
 

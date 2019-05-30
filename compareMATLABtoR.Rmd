@@ -25,7 +25,7 @@ MATLABmixtureModelOutput<- file.path( MATLABmixtureModelOutputPath, importedToRb
 #Import raw data
 rawDataPath<- file.path("data/")
 #Experiment was administered by MATLAB
-#.mat file been preprocessed into melted long dataframe by backwarsLtrsLoadRawData.R
+#.mat file been preprocessed into melted long dataframe by backwardsLtrsLoadRawData.R
 data<- readRDS( file.path(rawDataPath, "alexImportBackwardsPaper2E1.Rdata") ) 
 
 #tidy data
